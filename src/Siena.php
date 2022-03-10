@@ -6,9 +6,10 @@ use Symfony\Component\Yaml\Yaml;
 use Ramsey\Uuid\Uuid;
 
 /**
- * Siena is a flat-file data engine that uses the YAML format 
- * for storage.. It takes care of things such as creating, updating 
- * and querying for data.
+ * Siena is a flat-file data store engine that uses the YAML format 
+ * for storage. It takes care of things such as creating, updating 
+ * and querying for data, and makes it easy for you you to build 
+ * software solutions using just a flat-file data store.
  * 
  * @author Asko Nomm <asko@bien.ee>
  */
@@ -17,6 +18,17 @@ class Siena
     public function __construct(
         private readonly string $storeDir,
     ) {
+    }
+
+    /**
+     * Strips the .yaml file extension from `$input`.
+     *
+     * @param string $input
+     * @return string
+     */
+    private function stripExt(string $input): string
+    {
+        return str_replace('.yaml', '', $input);
     }
 
     /**
@@ -34,14 +46,14 @@ class Siena
     }
 
     /**
-     * Undocumented function
+     * Given a `$directory`, get all items in that path.
      *
-     * @param string $path
+     * @param string $directory
      * @return array
      */
-    private function getAll(string $path): array
+    private function getAll(string $directory): array
     {
-        $fullPath = $this->storeDir . '/' . $path . '/*.yaml';
+        $fullPath = $this->storeDir . '/' . $directory . '/*.yaml';
         $items = [];
 
         foreach (glob($fullPath) as $item) {
@@ -51,12 +63,24 @@ class Siena
         return $items;
     }
 
-    public function get(string $path): ?array
+    /**
+     * Given a `$path`, get a singular item. 
+     * 
+     * Example usage:
+     * ```php
+     * $siena = new Siena();
+     * $siena->get('posts/hello-world');
+     * ```
+     *
+     * @param string $path
+     * @return array|null
+     */
+    public function get(string $pathToFile): ?array
     {
-        $fullPath = $this->storeDir . '/' . $path . '.yaml';
+        $fullPath = $this->storeDir . '/' . $this->stripExt($pathToFile) . '.yaml';
 
-        if (str_contains($path, $this->storeDir)) {
-            $fullPath = $path;
+        if (str_contains($pathToFile, $this->storeDir)) {
+            $fullPath = $pathToFile;
         }
 
         if (file_exists($fullPath)) {
@@ -70,18 +94,51 @@ class Siena
         return null;
     }
 
-    public function find(string $directory): Search
+    /**
+     * Gets all items in `$directory` and passes it to the 
+     * Query class for manipulation.
+     *
+     * @param string $directory
+     * @return Query
+     */
+    public function find(string $directory): Query
     {
-        return new Search($this->getAll($directory));
+        return new Query($this->getAll($directory));
     }
 
-    public function put(string $path, array $data): ?string
+    /**
+     * Creates an item in `$pathToFile` and adds given `$data` in
+     * it. If a special `:id` token is used within `$pathToFile`, 
+     * will create a UUID V4 ID in that place, and return that ID, 
+     * otherwise returns null.
+     * 
+     * Example use:
+     * 
+     * ```php
+     * $siena = new Siena();
+     * $siena->put('posts/hello-world', ['title' => 'Hello, World!']);
+     * ```
+     * 
+     * Or if you want to generate a unique ID:
+     * 
+     * ```php
+     * $siena = new Siena();
+     * $id = $siena->put('posts/:id', ['title' => 'Hello, World!']);
+     * ```
+     * 
+     * And now `$id` would be something like `ae29f58e-b253-49f6-a557-7f0fa315c9d9`.
+     *
+     * @param string $pathToFile
+     * @param array $data
+     * @return string|null
+     */
+    public function put(string $pathToFile, array $data): ?string
     {
         // Construct path
-        $fullPath = $this->storeDir . '/' . $path . '.yaml';
+        $fullPath = $this->storeDir . '/' . $this->stripExt($pathToFile) . '.yaml';
 
-        if (str_contains($path, $this->storeDir)) {
-            $fullPath = $path;
+        if (str_contains($pathToFile, $this->storeDir)) {
+            $fullPath = $pathToFile;
         }
 
         // Generate ID
@@ -108,28 +165,54 @@ class Siena
         return null;
     }
 
-    public function update(string $path, array $data): void
+    /**
+     * Updates an item at `$pathToFile` with `$data`. If data with 
+     * existing keys exist, they will be overwritten, otherwise added.
+     *
+     * @param string $pathToFile
+     * @param array $data
+     * @return void
+     */
+    public function update(string $pathToFile, array $data): void
     {
-        $item = $this->get($path);
+        $item = $this->get($pathToFile);
 
-        $this->put($path, [
+        $this->put($pathToFile, [
             ...$item,
             ...$data,
         ]);
     }
 
-    public function remove(string $path, array $rules = []): void
+    /**
+     * Deletes the first file in `$directory` that the `Query` matches with 
+     * given `$where` conditions.
+     *
+     * @param string $pathToFile
+     * @param array $where
+     * @return void
+     */
+    public function remove(string $directory, array $where = []): void
     {
-        // If no rules are provided and the `$path` leads to an actual file, 
-        // then let's straight up delete it from `$path`.
-        if (empty($rules) && is_file($this->storeDir . '/' . $path . '.yaml')) {
-            unlink($path);
-        }
-
-        // Otherwise, let's try to find the file according to `$rules`. 
-        $item = $this->find($path)->where($rules)->first();
+        $item = $this->find($directory)->where($where)->first();
 
         if ($item) {
+            unlink($item['_path']);
+        }
+    }
+
+    /**
+     * Removes all files in `$directory` that the `Query` matches with
+     * given `$where` conditions.
+     *
+     * @param string $pathToFile
+     * @param array $rules
+     * @return void
+     */
+    public function removeAll(string $directory, array $where = []): void
+    {
+        $items = $this->find($directory)->where($where)->get();
+
+        foreach ($items as $item) {
             unlink($item['_path']);
         }
     }
