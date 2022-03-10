@@ -1,0 +1,20 @@
+{
+    "name": "askonomm/siena",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Askonomm\\Siena\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Asko Nomm",
+            "email": "asko@bien.ee"
+        }
+    ],
+    "require": {
+        "symfony/yaml": "^6.0",
+        "ramsey/uuid": "^4.2"
+    }
+}
