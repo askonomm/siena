@@ -1,5 +1,6 @@
 {
     "name": "askonomm/siena",
+    "description": "A flat-file data store engine and query builder.",
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -10,10 +11,12 @@
     "authors": [
         {
             "name": "Asko Nomm",
-            "email": "asko@bien.ee"
+            "email": "asko@bien.ee",
+            "homepage": "https://bien.ee"
         }
     ],
     "require": {
+        "php": "^8.1",
         "symfony/yaml": "^6.0",
         "ramsey/uuid": "^4.2"
     }
