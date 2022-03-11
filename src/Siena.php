@@ -7,9 +7,10 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Siena is a flat-file data store engine that uses the YAML format 
- * for storage. It takes care of things such as creating, updating, 
- * querying and deleting of data, and makes it easy to build 
- * software solutions using just a flat-file data store.
+ * for storage. It comes featured with a Query builer and takes care 
+ * of things such as creating, updating, querying and deleting of data, 
+ * which makes it easy to build software solutions using just a 
+ * flat-file data store.
  * 
  * @author Asko Nomm <asko@bien.ee>
  */
@@ -49,25 +50,25 @@ class Siena
     }
 
     /**
-     * Given a `$directory`, get all items in that path.
+     * Given a `$directory`, get a `Store` of items in it.
      *
      * @param string $directory
-     * @return array
+     * @return Store
      */
-    private function getAll(string $directory): array
+    private function getAll(string $directory): Store
     {
         $fullPath = $this->storeDir . '/' . $directory . '/*.yaml';
         $items = [];
 
         foreach (glob($fullPath) as $item) {
-            $items[] = static::get($item);
+            $items[] = $this->get($item);
         }
 
-        return $items;
+        return new Store($items);
     }
 
     /**
-     * Given a `$path`, get a singular item. 
+     * Given a `$path`, get a `StoreItem`. 
      * 
      * Example usage:
      * ```php
@@ -76,9 +77,9 @@ class Siena
      * ```
      *
      * @param string $path
-     * @return array|null
+     * @return StoreItem|null
      */
-    public function get(string $pathToFile): ?array
+    public function get(string $pathToFile): ?StoreItem
     {
         $fullPath = $this->storeDir . '/' . $this->stripExt($pathToFile) . '.yaml';
 
@@ -87,11 +88,11 @@ class Siena
         }
 
         if (file_exists($fullPath)) {
-            return [
+            return new StoreItem([
                 ...Yaml::parseFile($fullPath),
                 '_id' => $this->getIdFromPath($fullPath),
                 '_path' => $fullPath,
-            ];
+            ]);
         }
 
         return null;
@@ -99,14 +100,14 @@ class Siena
 
     /**
      * Gets all items in `$directory` and passes it to the 
-     * Query class for manipulation.
+     * Query class, and returns its instance for manipulation.
      *
      * @param string $directory
-     * @return Query
+     * @return QueryBuilder
      */
-    public function find(string $directory): Query
+    public function find(string $directory): QueryBuilder
     {
-        return new Query($this->getAll($directory));
+        return new QueryBuilder($this->getAll($directory));
     }
 
     /**
@@ -187,8 +188,8 @@ class Siena
     }
 
     /**
-     * Deletes the first file in `$directory` that the `Query` matches with 
-     * given `$where` conditions.
+     * Deletes the first file in `$directory` that the `QueryBuilder` 
+     * matches with given `$where` conditions.
      *
      * @param string $pathToFile
      * @param array $where
@@ -204,8 +205,8 @@ class Siena
     }
 
     /**
-     * Removes all files in `$directory` that the `Query` matches with
-     * given `$where` conditions.
+     * Removes all files in `$directory` that the `QueryBuilder` 
+     * matches with given `$where` conditions.
      *
      * @param string $pathToFile
      * @param array $rules
