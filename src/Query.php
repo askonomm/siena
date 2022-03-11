@@ -2,21 +2,26 @@
 
 namespace Askonomm\Siena;
 
-class Search
+/**
+ * Undocumented class
+ * 
+ * @author Asko Nomm <asko@bien.ee>
+ */
+class Query
 {
     public function __construct(
         private array $items = [],
     ) {
     }
 
-    public function where(array $rules): self
+    public function where(array $conditions): self
     {
         $matchedItems = [];
 
         foreach ($this->items as $item) {
-            $requirements = count($rules);
+            $requirements = count($conditions);
 
-            foreach ($rules as $k => $v) {
+            foreach ($conditions as $k => $v) {
                 $keys = explode('|', $k);
 
                 foreach ($keys as $key) {
@@ -61,12 +66,23 @@ class Search
         return $this->items;
     }
 
-    public function first(): array
+    public function first(): ?StoreItem
     {
         if (isset($this->items) && count($this->items) > 0) {
             return $this->items[0];
         }
 
-        return [];
+        return null;
+    }
+
+    public function last(): ?StoreItem
+    {
+        if (isset($this->items) && count($this->items) > 0) {
+            $items = $this->items;
+
+            return end($items);
+        }
+
+        return null;
     }
 }

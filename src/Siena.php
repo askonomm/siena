@@ -7,8 +7,8 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Siena is a flat-file data store engine that uses the YAML format 
- * for storage. It takes care of things such as creating, updating 
- * and querying for data, and makes it easy for you you to build 
+ * for storage. It takes care of things such as creating, updating, 
+ * querying and deleting of data, and makes it easy to build 
  * software solutions using just a flat-file data store.
  * 
  * @author Asko Nomm <asko@bien.ee>
@@ -18,6 +18,9 @@ class Siena
     public function __construct(
         private readonly string $storeDir,
     ) {
+        if (!is_dir($storeDir)) {
+            mkdir($storeDir);
+        }
     }
 
     /**
@@ -75,7 +78,7 @@ class Siena
      * @param string $path
      * @return array|null
      */
-    public function get(string $pathToFile): ?array
+    public function get(string $pathToFile): ?StoreItem
     {
         $fullPath = $this->storeDir . '/' . $this->stripExt($pathToFile) . '.yaml';
 
@@ -84,11 +87,11 @@ class Siena
         }
 
         if (file_exists($fullPath)) {
-            return [
+            return new StoreItem([
                 ...Yaml::parseFile($fullPath),
                 '_id' => $this->getIdFromPath($fullPath),
                 '_path' => $fullPath,
-            ];
+            ]);
         }
 
         return null;
