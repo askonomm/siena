@@ -66,7 +66,7 @@ class Query
         return $this->items;
     }
 
-    public function first(): ?StoreItem
+    public function first(): ?array
     {
         if (isset($this->items) && count($this->items) > 0) {
             return $this->items[0];
@@ -75,7 +75,7 @@ class Query
         return null;
     }
 
-    public function last(): ?StoreItem
+    public function last(): ?array
     {
         if (isset($this->items) && count($this->items) > 0) {
             $items = $this->items;

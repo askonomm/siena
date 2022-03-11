@@ -78,7 +78,7 @@ class Siena
      * @param string $path
      * @return array|null
      */
-    public function get(string $pathToFile): ?StoreItem
+    public function get(string $pathToFile): ?array
     {
         $fullPath = $this->storeDir . '/' . $this->stripExt($pathToFile) . '.yaml';
 
@@ -87,11 +87,11 @@ class Siena
         }
 
         if (file_exists($fullPath)) {
-            return new StoreItem([
+            return [
                 ...Yaml::parseFile($fullPath),
                 '_id' => $this->getIdFromPath($fullPath),
                 '_path' => $fullPath,
-            ]);
+            ];
         }
 
         return null;
