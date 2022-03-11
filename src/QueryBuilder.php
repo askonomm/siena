@@ -56,7 +56,7 @@ class QueryBuilder
         $items = $this->store->toArray();
 
         usort($items, function ($a, $b) use ($key) {
-            return $b[$key] <=> $a[$key];
+            return $b->$key <=> $a->$key;
         });
 
         $this->store = new Store($items);
@@ -69,7 +69,7 @@ class QueryBuilder
         $items = $this->store->toArray();
 
         usort($items, function ($a, $b) use ($key) {
-            return $a[$key] <=> $b[$key];
+            return $a->$key <=> $b->$key;
         });
 
         $this->store = new Store($items);
