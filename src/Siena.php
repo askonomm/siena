@@ -181,10 +181,14 @@ class Siena
     {
         $item = $this->get($pathToFile);
 
-        $this->put($pathToFile, [
-            ...$item,
-            ...$data,
-        ]);
+        if ($item) {
+            $this->put($pathToFile, [
+                ...$item,
+                ...$data,
+            ])
+        } else {
+            $this->put($pathToFile, $data);
+        }
     }
 
     /**
