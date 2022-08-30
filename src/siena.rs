@@ -1,10 +1,10 @@
 use std::{collections::{HashMap}, fs};
-
-use crate::parsers;
+use crate::parsers::{front_matter_parser};
 
 #[derive(Debug, Default)]
 pub enum RecordParser {
     #[default] FrontMatter,
+    Yaml,
 }
 
 #[derive(Debug, Default)]
@@ -14,7 +14,9 @@ pub struct Siena {
     records: Vec<HashMap<String, String>>,
 }
 
+// 
 impl Siena {
+    // set dir
     pub fn set_directory(mut self, directory: &str) -> Self {
         self.directory = String::from(directory);
 
@@ -38,7 +40,10 @@ impl Siena {
                     if contents.is_ok() {
                         match self.parser {
                             RecordParser::FrontMatter => {
-                                self.records.push(parsers::front_matter_parser::parse(&contents.unwrap()))
+                                self.records.push(front_matter_parser::parse(&contents.unwrap()))
+                            }
+                            _ => {
+                                self.records.push(front_matter_parser::parse(&contents.unwrap()))
                             }
                         }
                     }

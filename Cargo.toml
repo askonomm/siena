@@ -4,3 +4,5 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
+regex = "1"
+comrak = "0.14"
