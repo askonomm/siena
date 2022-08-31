@@ -1,4 +1,6 @@
 use std::{collections::{HashMap}, fs};
+use regex::Regex;
+
 use crate::parsers::front_matter;
 
 #[derive(Debug, Default)]
@@ -34,7 +36,6 @@ impl Siena {
         let dir = fs::read_dir(format!("{}{}{}", self.directory, "/", name));
 
         if dir.is_ok() {
-            println!("{:?}", dir.as_ref().unwrap());
             for file in dir.unwrap() {
                 
                 if file.is_ok() {
@@ -52,8 +53,6 @@ impl Siena {
                     }
                 }
             }
-        } else {
-            println!("{:?}", dir.err());
         }
         
         return self;
@@ -92,6 +91,21 @@ impl Siena {
 
         for record in &self.records {
             if record.contains_key(key) {
+                records.push(record.clone());
+            }
+        }
+
+        self.records = records;
+
+        return self;
+    }
+
+    pub fn when_matches(mut self, key: &str, pattern: &str) -> Self {
+        let mut records: Vec<HashMap<String, String>> = Vec::new();
+        let re = Regex::new(pattern).unwrap();
+
+        for record in &self.records {
+            if re.is_match(record[key].as_str()) {
                 records.push(record.clone());
             }
         }
