@@ -1,21 +1,28 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 use crate::siena::Siena;
 
 #[test]
 fn get_collection_test() {
-    let store = Siena::default().set_directory("./test_data");
+    let root_dir = env::current_dir().unwrap();
 
-    let data_item_1: HashMap<String, String> = HashMap::from([
-        (String::from("title"), String::from("Hello, world")),
-        (String::from("date"), String::from("2020-01-01"))
+    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
+
+    let expected_data_item_1: HashMap<String, String> = HashMap::from([
+        (String::from("title"), String::from("Hello, World")),
+        (String::from("date"), String::from("2020-01-01")),
+        (String::from("html"), String::from("<p>Hi world.</p>\n"))
     ]);
 
-    let data_item_2: HashMap<String, String> = HashMap::from([
-        (String::from("title"), String::from("Goodbye, world")),
-        (String::from("date"), String::from("2022-01-01"))
+    let expected_data_item_2: HashMap<String, String> = HashMap::from([
+        (String::from("title"), String::from("Bye, World")),
+        (String::from("date"), String::from("2022-01-01")),
+        (String::from("html"), String::from("<p>Bye world.</p>\n"))
     ]);
     
-    let data = Vec::from([data_item_1, data_item_2]);
+    let expected = Vec::from([
+        expected_data_item_1, 
+        expected_data_item_2,
+    ]);
 
-    assert_eq!(store.collection("demo").get_all(), data);
+    assert_eq!(store.collection("demo").get_all(), expected);
 }

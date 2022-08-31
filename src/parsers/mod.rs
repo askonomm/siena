@@ -1,4 +1,4 @@
-pub mod front_matter_parser;
+pub mod front_matter;
 
 #[cfg(test)]
-mod front_matter_parser_tests;
+mod front_matter_tests;

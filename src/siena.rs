@@ -1,5 +1,5 @@
 use std::{collections::{HashMap}, fs};
-use crate::parsers::{front_matter_parser};
+use crate::parsers::front_matter;
 
 #[derive(Debug, Default)]
 pub enum RecordParser {
@@ -17,6 +17,7 @@ pub struct Siena {
 // 
 impl Siena {
     // set dir
+    // TODO: remove ending forward slash
     pub fn set_directory(mut self, directory: &str) -> Self {
         self.directory = String::from(directory);
 
@@ -29,26 +30,30 @@ impl Siena {
         return self;
     }
 
-    pub fn collection(mut self, path: &str) -> Self {
-        let dir = fs::read_dir(path);
+    pub fn collection(mut self, name: &str) -> Self {
+        let dir = fs::read_dir(format!("{}{}{}", self.directory, "/", name));
 
         if dir.is_ok() {
+            println!("{:?}", dir.as_ref().unwrap());
             for file in dir.unwrap() {
+                
                 if file.is_ok() {
                     let contents = fs::read_to_string(file.unwrap().path());
 
                     if contents.is_ok() {
                         match self.parser {
                             RecordParser::FrontMatter => {
-                                self.records.push(front_matter_parser::parse(&contents.unwrap()))
+                                self.records.push(front_matter::parse(&contents.unwrap()))
                             }
                             _ => {
-                                self.records.push(front_matter_parser::parse(&contents.unwrap()))
+                                self.records.push(front_matter::parse(&contents.unwrap()))
                             }
                         }
                     }
                 }
             }
+        } else {
+            println!("{:?}", dir.err());
         }
         
         return self;
