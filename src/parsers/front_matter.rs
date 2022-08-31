@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use regex::Regex;
 use comrak::{markdown_to_html, ComrakOptions};
 
-// Parses the YAML block from the Markdown file into a key-value
+// Parses the YAML block from the Front Matter `contents` into a key-value
 // hashmap. Note that this supports YAML-like structures, not actual YAML, 
 // and so things like indents to create hierarchies are not supported.
 fn parse_yaml(contents: &str) -> Option<HashMap<String, String>> {
@@ -34,7 +34,7 @@ fn parse_yaml(contents: &str) -> Option<HashMap<String, String>> {
     return None;
 }
 
-// Parses the markdown block from the Markdown file into HTML.
+// Parses the markdown block from the Front Matter `contents` into a HTML string.
 fn parse_markdown(contents: &str) -> String {
     let meta_block_regex = Regex::new(r"(?s)\-\-\-.*?\-\-\-").unwrap();
     let markdown_block = meta_block_regex.replace(contents, "");

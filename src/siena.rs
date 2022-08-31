@@ -30,7 +30,7 @@ impl Siena {
         return self;
     }
 
-    pub fn collection(mut self, name: &str) -> Self {
+    pub fn from_collection(mut self, name: &str) -> Self {
         let dir = fs::read_dir(format!("{}{}{}", self.directory, "/", name));
 
         if dir.is_ok() {
@@ -59,11 +59,11 @@ impl Siena {
         return self;
     }
 
-    pub fn r#where(mut self, key: &str, value: &str) -> Self {
+    pub fn when_equals(mut self, key: &str, equals_value: &str) -> Self {
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
-            if record[key] == value {
+            if record[key] == equals_value {
                 records.push(record.clone());
             }
         }
@@ -73,11 +73,25 @@ impl Siena {
         return self;
     }
 
-    pub fn where_not(mut self, key: &str, value: &str) -> Self {
+    pub fn when_not_equals(mut self, key: &str, equals_value: &str) -> Self {
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
-            if record[key] != value {
+            if record[key] != equals_value {
+                records.push(record.clone());
+            }
+        }
+
+        self.records = records;
+
+        return self;
+    }
+
+    pub fn when_has(mut self, key: &str) -> Self {
+        let mut records: Vec<HashMap<String, String>> = Vec::new();
+
+        for record in &self.records {
+            if record.contains_key(key) {
                 records.push(record.clone());
             }
         }
