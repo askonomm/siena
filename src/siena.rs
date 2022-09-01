@@ -37,7 +37,6 @@ impl Siena {
 
         if dir.is_ok() {
             for file in dir.unwrap() {
-                
                 if file.is_ok() {
                     let contents = fs::read_to_string(file.unwrap().path());
 

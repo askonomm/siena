@@ -3,31 +3,20 @@ use regex::Regex;
 use comrak::{markdown_to_html, ComrakOptions};
 
 // Parses the YAML block from the Front Matter `contents` into a key-value
-// hashmap. Note that this supports YAML-like structures, not actual YAML, 
-// and so things like indents to create hierarchies are not supported.
+// hashmap.
 fn parse_yaml(contents: &str) -> Option<HashMap<String, String>> {
-    let meta_block_regex = Regex::new(r"(?s)\-\-\-(.*?)\-\-\-").unwrap();
+    let meta_block_regex = Regex::new(r"(?s)\-\-\-\n(.*?)\n\-\-\-").unwrap();
 
     if meta_block_regex.is_match(contents) {
         let meta_block = meta_block_regex.captures(contents);
 
         if meta_block.is_some() {
-            let meta_block_contents = &meta_block.unwrap().get(0);
-            let lines = meta_block_contents.unwrap().as_str().lines();
-            let mut meta = HashMap::new();
+            let meta_block_contents = &meta_block.unwrap().get(1).unwrap().as_str();
+            let meta: Result<HashMap<String, String>, serde_yaml::Error> = serde_yaml::from_str(meta_block_contents);
 
-            for line in lines {
-                let parts: Vec<&str> = line.split(r":").collect();
-
-                if parts.len() > 1 {
-                    let key = parts[0];
-                    let value = parts[1..].join(":");
-
-                    meta.insert(String::from(key.trim()), String::from(value.trim()));
-                }
+            if meta.is_ok() {
+                return Some(meta.unwrap());
             }
-
-            return Some(meta);
         }
     }
 
@@ -42,7 +31,9 @@ fn parse_markdown(contents: &str) -> String {
     return markdown_to_html(markdown_block.trim(), &ComrakOptions::default())
 }
 
-
+// Given Front Matter `contents`, returns a key-value hashmap where the Markdown content 
+// is returned as "entry" key, and parsed into HTML. The YAML block is parsed as-is, with 
+// keys and values kept in place.
 pub fn parse(contents: &str) -> HashMap<String, String> {
     let meta = parse_yaml(contents);
     let html = parse_markdown(contents);

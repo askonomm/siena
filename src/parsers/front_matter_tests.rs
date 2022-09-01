@@ -13,21 +13,10 @@ fn front_matter_generic_test() {
 }
 
 #[test]
-fn front_matter_test_colons_in_meta_values() {
-    let seed = "---\ntitle: Hello : World\n---\n\nBye, world.";
-    let expected: HashMap<String, String> = HashMap::from([
-        (String::from("title"), String::from("Hello : World")),
-        (String::from("html"), String::from("<p>Bye, world.</p>\n"))
-    ]);
-
-    assert_eq!(front_matter::parse(seed), expected);
-}
-
-#[test]
 fn front_matter_test_no_html() {
-    let seed = "---\ntitle: Hello : World\n---";
+    let seed = "---\ntitle: Hello, World\n---";
     let expected: HashMap<String, String> = HashMap::from([
-        (String::from("title"), String::from("Hello : World")),
+        (String::from("title"), String::from("Hello, World")),
         (String::from("html"), String::from(""))
     ]);
 

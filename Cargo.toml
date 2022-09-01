@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 regex = "1"
 comrak = "0.14"
+serde = "1.0"
+serde_yaml = "0.9"
