@@ -17,10 +17,8 @@ pub struct Siena {
 
 // 
 impl Siena {
-    // set dir
-    // TODO: remove ending forward slash
     pub fn set_directory(mut self, directory: &str) -> Self {
-        self.directory = String::from(directory);
+        self.directory = String::from(directory.trim_end_matches(&['/']));
 
         return self;
     }
