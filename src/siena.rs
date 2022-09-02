@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, cmp::Ordering};
 use regex::Regex;
 use crate::parsers::{front_matter, yaml};
 
@@ -6,6 +6,12 @@ use crate::parsers::{front_matter, yaml};
 pub enum RecordParser {
     #[default] FrontMatter,
     Yaml,
+}
+
+#[derive(Debug)]
+pub enum RecordSortOrder {
+    Asc,
+    Desc,
 }
 
 #[derive(Debug, Default)]
@@ -58,7 +64,7 @@ impl Siena {
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
-            if record[key] == equals_value {
+            if record.contains_key(key) && record[key] == equals_value {
                 records.push(record.clone());
             }
         }
@@ -72,7 +78,7 @@ impl Siena {
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
-            if record[key] != equals_value {
+            if record.contains_key(key) && record[key] != equals_value || !record.contains_key(key) {
                 records.push(record.clone());
             }
         }
@@ -101,12 +107,32 @@ impl Siena {
         let re = Regex::new(pattern).unwrap();
 
         for record in &self.records {
-            if re.is_match(record[key].as_str()) {
+            if record.contains_key(key) && re.is_match(record[key].as_str()) {
                 records.push(record.clone());
             }
         }
 
         self.records = records;
+
+        return self;
+    }
+
+    fn sort_compare(a: &HashMap<String, String>, b: &HashMap<String, String>, by: &str, order: &RecordSortOrder) -> Ordering {
+        if a.get(by).is_some() && b.get(by).is_some() {
+            return match order {
+                RecordSortOrder::Asc => a.get(by).unwrap().cmp(b.get(by).unwrap()),
+                RecordSortOrder::Desc => b.get(by).unwrap().cmp(a.get(by).unwrap())
+            }
+        }
+
+        return match order {
+            RecordSortOrder::Asc => Ordering::Greater,
+            RecordSortOrder::Desc => Ordering::Less
+        }
+    }
+
+    pub fn sort(mut self, key: &str, order: RecordSortOrder) -> Self {
+        self.records.sort_by(|a, b| Self::sort_compare(a, b, key, &order));
 
         return self;
     }
