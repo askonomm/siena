@@ -1,7 +1,7 @@
-use std::{collections::{HashMap}, fs};
+use std::{collections::HashMap, fs};
 use regex::Regex;
 
-use crate::parsers::front_matter;
+use crate::parsers::{front_matter, yaml};
 
 #[derive(Debug, Default)]
 pub enum RecordParser {
@@ -45,8 +45,8 @@ impl Siena {
                             RecordParser::FrontMatter => {
                                 self.records.push(front_matter::parse(&contents.unwrap()))
                             }
-                            _ => {
-                                self.records.push(front_matter::parse(&contents.unwrap()))
+                            RecordParser::Yaml => {
+                                self.records.push(yaml::parse(&contents.unwrap()))
                             }
                         }
                     }
