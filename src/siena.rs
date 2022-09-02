@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fs};
 use regex::Regex;
-
 use crate::parsers::{front_matter, yaml};
 
 #[derive(Debug, Default)]
