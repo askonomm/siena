@@ -46,12 +46,12 @@ impl Siena {
 
                 match self.parser {
                     RecordParser::FrontMatter => {
-                        if !file_path_str.ends_with(".md") || !file_path.ends_with(".markdown") {
+                        if !file_path_str.ends_with(".md") && !file_path.ends_with(".markdown") {
                             continue;
                         }
                     }
                     RecordParser::Yaml => {
-                        if !file_path_str.ends_with(".yaml") || !file_path.ends_with(".yml") {
+                        if !file_path_str.ends_with(".yaml") && !file_path.ends_with(".yml") {
                             continue;
                         }
                     }
