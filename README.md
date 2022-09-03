@@ -6,7 +6,10 @@ Siena is a flat-file database and an ORM for Rust. Well, actually your filesyste
 
 ## Install
 
-To be written.
+Add the following to your Cargo.toml file:
+```TOML
+siena = "1.0.0"
+```
 
 ## Usage
 
