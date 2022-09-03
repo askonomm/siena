@@ -1,0 +1,10 @@
+image: archlinux
+packages:
+  - curl
+sources:
+  - https://git.sr.ht/~asko/siena
+tasks:
+  - install: curl https://sh.rustup.rs -sSf | sh -s -- -y
+  - test: |
+      cd siena
+      PATH="$HOME/.cargo/bin:$PATH" cargo test
