@@ -40,8 +40,26 @@ impl Siena {
 
         if dir.is_ok() {
             for file in dir.unwrap() {
-                if file.is_ok() {
-                    let contents = fs::read_to_string(file.unwrap().path());
+                // Skip iteration when parser does not match file extension
+                let file_path = file.as_ref().unwrap().path();
+                let file_path_str = file_path.to_str().clone().unwrap();
+
+                match self.parser {
+                    RecordParser::FrontMatter => {
+                        if !file_path_str.ends_with(".md") {
+                            continue;
+                        }
+                    }
+                    RecordParser::Yaml => {
+                        if !file_path_str.ends_with(".yaml") {
+                            continue;
+                        }
+                    }
+                }
+
+                // If we made it this far, continue with parsing
+                if file.as_ref().is_ok(){
+                    let contents = fs::read_to_string(file.as_ref().unwrap().path());
 
                     if contents.is_ok() {
                         match self.parser {
