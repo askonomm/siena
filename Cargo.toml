@@ -1,7 +1,14 @@
 [package]
 name = "siena"
+description = "A flat-file database and ORM."
+repository = "https://git.sr.ht/~asko/siena"
 version = "1.0.0"
 edition = "2021"
+authors = ["Asko Nõmm <ano@ano.ee>"]
+license = "MIT"
+license-file = "LICENSE.txt"
+keywords = ["frontmatter", "yaml", "orm", "database"]
+categories = ["database", "filesystem"]
 
 [dependencies]
 regex = "1"
