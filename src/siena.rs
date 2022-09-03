@@ -144,7 +144,11 @@ impl Siena {
     }
 
     pub fn offset(mut self, offset: usize) -> Self {
-        self.records.drain(0..offset);
+        if self.records.len() >= offset {
+            self.records.drain(0..offset);
+        } else {
+            self.records = Vec::new();
+        }
 
         return self;
     }
