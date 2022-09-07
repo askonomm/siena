@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fs, cmp::Ordering};
+use std::{collections::HashMap, cmp::Ordering};
 use regex::Regex;
-use crate::parsers::{front_matter, yaml};
+use crate::providers::local::LocalProvider;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub enum RecordParser {
     #[default] FrontMatter,
     Yaml,
@@ -15,16 +15,24 @@ pub enum RecordSortOrder {
 }
 
 #[derive(Debug, Default)]
+pub enum Store {
+    #[default] None,
+    Local {
+        directory: String
+    }
+}
+
+#[derive(Debug, Default)]
 pub struct Siena {
-    directory: String,
+    store: Store,
     parser: RecordParser,
     records: Vec<HashMap<String, String>>,
 }
 
 // 
 impl Siena {
-    pub fn set_directory(mut self, directory: &str) -> Self {
-        self.directory = String::from(directory.trim_end_matches(&['/']));
+    pub fn set_store(mut self, store: Store) -> Self {
+        self.store = store;
 
         return self;
     }
@@ -36,45 +44,19 @@ impl Siena {
     }
 
     pub fn from_collection(mut self, name: &str) -> Self {
-        let dir = fs::read_dir(format!("{}{}{}", self.directory, "/", name));
+        match self.store {
+            Store::Local { ref directory } => {
+                let mut provider = LocalProvider {
+                    directory, 
+                    parser: self.parser,
+                };
 
-        if dir.is_ok() {
-            for file in dir.unwrap() {
-                // Skip iteration when parser does not match file extension
-                let file_path = file.as_ref().unwrap().path();
-                let file_path_str = file_path.to_str().clone().unwrap();
-
-                match self.parser {
-                    RecordParser::FrontMatter => {
-                        if !file_path_str.ends_with(".md") && !file_path.ends_with(".markdown") {
-                            continue;
-                        }
-                    }
-                    RecordParser::Yaml => {
-                        if !file_path_str.ends_with(".yaml") && !file_path.ends_with(".yml") {
-                            continue;
-                        }
-                    }
-                }
-
-                // If we made it this far, continue with parsing
-                if file.as_ref().is_ok(){
-                    let contents = fs::read_to_string(file.as_ref().unwrap().path());
-
-                    if contents.is_ok() {
-                        match self.parser {
-                            RecordParser::FrontMatter => {
-                                self.records.push(front_matter::parse(&contents.unwrap()))
-                            }
-                            RecordParser::Yaml => {
-                                self.records.push(yaml::parse(&contents.unwrap()))
-                            }
-                        }
-                    }
-                }
+                self.records = provider.get_collection(name);
             }
+
+            Store::None => ()
         }
-        
+
         return self;
     }
 

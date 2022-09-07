@@ -1,12 +1,15 @@
 use std::{collections::HashMap, env};
-use crate::siena::{Siena, RecordSortOrder};
+use crate::siena::{Siena, RecordSortOrder, Store};
 
 #[test]
 fn sort_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
-
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+        
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Bye, World")),
         (String::from("date"), String::from("2022-01-01")),
@@ -43,7 +46,10 @@ fn sort_test() {
 fn when_equals_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Hello, World")),
@@ -67,7 +73,10 @@ fn when_equals_test() {
 fn when_not_equals_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Bye, World")),
@@ -99,7 +108,10 @@ fn when_not_equals_test() {
 fn when_has_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("special-item"), String::from("true")),
@@ -123,7 +135,10 @@ fn when_has_test() {
 fn when_matches_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Bye, World")),
@@ -147,8 +162,11 @@ fn when_matches_test() {
 fn limit_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
-
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+    
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Bye, World")),
         (String::from("date"), String::from("2022-01-01")),
@@ -172,8 +190,11 @@ fn limit_test() {
 fn offset_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
-
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+    
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Hello, World")),
         (String::from("date"), String::from("2020-01-01")),
@@ -198,8 +219,11 @@ fn offset_test() {
 fn offset_out_of_bounds_test() {
     let root_dir = env::current_dir().unwrap();
 
-    let store = Siena::default().set_directory(&format!("{}{}", root_dir.display().to_string().as_str(), "/test_data"));
-
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+    
     let result = store
         .from_collection("demo")
         .sort("date", RecordSortOrder::Desc)
