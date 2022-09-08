@@ -2,7 +2,7 @@
 name = "siena"
 description = "A flat-file database and ORM."
 repository = "https://git.sr.ht/~asko/siena"
-version = "1.1.0"
+version = "1.1.1"
 edition = "2021"
 authors = ["Asko Nõmm <ano@ano.ee>"]
 license = "MIT"

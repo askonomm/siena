@@ -22,6 +22,10 @@ pub enum Store {
     }
 }
 
+pub trait StoreProvider {
+    fn retrieve(&self, name: &str) -> Vec<HashMap<String, String>>;
+}
+
 #[derive(Debug, Default)]
 pub struct Siena {
     store: Store,
@@ -46,12 +50,12 @@ impl Siena {
     pub fn from_collection(mut self, name: &str) -> Self {
         match self.store {
             Store::Local { ref directory } => {
-                let mut provider = LocalProvider {
+                let provider = LocalProvider {
                     directory, 
                     parser: self.parser,
                 };
 
-                self.records = provider.get_collection(name);
+                self.records = provider.retrieve(name);
             }
 
             Store::None => ()
@@ -117,22 +121,20 @@ impl Siena {
         return self;
     }
 
-    fn sort_compare(a: &HashMap<String, String>, b: &HashMap<String, String>, by: &str, order: &RecordSortOrder) -> Ordering {
-        if a.get(by).is_some() && b.get(by).is_some() {
-            return match order {
-                RecordSortOrder::Asc => a.get(by).unwrap().cmp(b.get(by).unwrap()),
-                RecordSortOrder::Desc => b.get(by).unwrap().cmp(a.get(by).unwrap())
-            }
-        }
-
-        return match order {
-            RecordSortOrder::Asc => Ordering::Greater,
-            RecordSortOrder::Desc => Ordering::Less
-        }
-    }
-
     pub fn sort(mut self, key: &str, order: RecordSortOrder) -> Self {
-        self.records.sort_by(|a, b| Self::sort_compare(a, b, key, &order));
+        self.records.sort_by(|a, b| {
+            if a.get(key).is_some() && b.get(key).is_some() {
+                return match order {
+                    RecordSortOrder::Asc => a.get(key).unwrap().cmp(b.get(key).unwrap()),
+                    RecordSortOrder::Desc => b.get(key).unwrap().cmp(a.get(key).unwrap())
+                }
+            }
+    
+            return match order {
+                RecordSortOrder::Asc => Ordering::Greater,
+                RecordSortOrder::Desc => Ordering::Less
+            }
+        });
 
         return self;
     }
