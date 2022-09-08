@@ -1,5 +1,5 @@
 use std::{collections::HashMap, env};
-use crate::siena::{Siena, RecordSortOrder, Store};
+use crate::siena::{Siena, RecordSortOrder, Store, RecordParser};
 
 #[test]
 fn sort_test() {
@@ -37,6 +37,37 @@ fn sort_test() {
     let result = store
         .from_collection("demo")
         .sort("date", RecordSortOrder::Desc)
+        .get_all();
+
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn sort_test_yaml() {
+    let root_dir = env::current_dir().unwrap();
+
+    let store = Siena::default()
+        .set_parser(RecordParser::Yaml)
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+
+    let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("title"), String::from("Hello, world")),
+    ]);
+
+    let expected_data_item_2: HashMap<String, String> = HashMap::from([
+        (String::from("title"), String::from("Bye, world"))
+    ]);
+    
+    let expected = Vec::from([
+        expected_data_item, 
+        expected_data_item_2,
+    ]);
+
+    let result = store
+        .from_collection("demo")
+        .sort("title", RecordSortOrder::Desc)
         .get_all();
 
     assert_eq!(result, expected);

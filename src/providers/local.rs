@@ -14,7 +14,7 @@ impl StoreProvider for LocalProvider<'_> {
         if dir.is_err() {
             return records;
         }
-
+        
         for file in dir.unwrap() {
             // Skip iteration when parser does not match file extension
             let file_path = file.as_ref().unwrap().path();
@@ -22,12 +22,12 @@ impl StoreProvider for LocalProvider<'_> {
 
             match self.parser {
                 RecordParser::FrontMatter => {
-                    if !file_path_str.ends_with(".md") && !file_path.ends_with(".markdown") {
+                    if !file_path_str.ends_with(".md") && !file_path_str.ends_with(".markdown") {
                         continue;
                     }
                 }
                 RecordParser::Yaml => {
-                    if !file_path_str.ends_with(".yaml") && !file_path.ends_with(".yml") {
+                    if !file_path_str.ends_with(".yaml") && !file_path_str.ends_with(".yml") {
                         continue;
                     }
                 }

@@ -17,6 +17,7 @@ pub enum RecordSortOrder {
 #[derive(Debug, Default)]
 pub enum Store {
     #[default] None,
+    
     Local {
         directory: String
     }
