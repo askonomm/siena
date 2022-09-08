@@ -45,19 +45,17 @@ impl StoreProvider for LocalProvider<'_> {
                         .replace(".yaml", "")
                         .replace(".md", "")
                         .replace(".markdown", "");
-                   
-                    print!("{:?}", file_name_str);
-
-                    match self.parser {
-                        RecordParser::FrontMatter => {
-                            record = front_matter::parse(&contents.unwrap());
-                        }
-                        RecordParser::Yaml => {
-                            record = yaml::parse(&contents.unwrap());
-                        }
-                    }
 
                     record.insert("_id".to_string(), file_name_str);
+                   
+                    match self.parser {
+                        RecordParser::FrontMatter => {
+                            record.extend(front_matter::parse(&contents.unwrap()));
+                        }
+                        RecordParser::Yaml => {
+                            record.extend(yaml::parse(&contents.unwrap()));
+                        }
+                    }
 
                     records.push(record);
                 }
