@@ -38,14 +38,28 @@ impl StoreProvider for LocalProvider<'_> {
                 let contents = fs::read_to_string(file.as_ref().unwrap().path());
 
                 if contents.is_ok() {
+                    let mut record: HashMap<String, String> = HashMap::new();
+                    let file_name = file.as_ref().unwrap().file_name();
+                    let file_name_str = file_name.to_str().unwrap()
+                        .replace(".yml", "")
+                        .replace(".yaml", "")
+                        .replace(".md", "")
+                        .replace(".markdown", "");
+                   
+                    print!("{:?}", file_name_str);
+
                     match self.parser {
                         RecordParser::FrontMatter => {
-                            records.push(front_matter::parse(&contents.unwrap()))
+                            record = front_matter::parse(&contents.unwrap());
                         }
                         RecordParser::Yaml => {
-                            records.push(yaml::parse(&contents.unwrap()))
+                            record = yaml::parse(&contents.unwrap());
                         }
                     }
+
+                    record.insert("_id".to_string(), file_name_str);
+
+                    records.push(record);
                 }
             }
         }

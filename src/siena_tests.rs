@@ -12,17 +12,20 @@ fn sort_test() {
         
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Bye, World")),
+        (String::from("_id"), String::from("2")),
         (String::from("date"), String::from("2022-01-01")),
         (String::from("html"), String::from("<p>Bye world.</p>\n"))
     ]);
 
     let expected_data_item_2: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Hello, World")),
+        (String::from("_id"), String::from("1")),
         (String::from("date"), String::from("2020-01-01")),
         (String::from("html"), String::from("<p>Hi world.</p>\n"))
     ]);
 
     let expected_data_item_3: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("3")),
         (String::from("special-item"), String::from("true")),
         (String::from("date"), String::from("1992-09-17")),
         (String::from("html"), String::from(""))
@@ -54,10 +57,12 @@ fn sort_test_yaml() {
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
         (String::from("title"), String::from("Hello, world")),
+        (String::from("_id"), String::from("test2")),
     ]);
 
     let expected_data_item_2: HashMap<String, String> = HashMap::from([
-        (String::from("title"), String::from("Bye, world"))
+        (String::from("title"), String::from("Bye, world")),
+        (String::from("_id"), String::from("test")),
     ]);
     
     let expected = Vec::from([
@@ -83,6 +88,7 @@ fn when_equals_test() {
         });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("1")),
         (String::from("title"), String::from("Hello, World")),
         (String::from("date"), String::from("2020-01-01")),
         (String::from("html"), String::from("<p>Hi world.</p>\n"))
@@ -110,12 +116,14 @@ fn when_not_equals_test() {
         });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("2")),
         (String::from("title"), String::from("Bye, World")),
         (String::from("date"), String::from("2022-01-01")),
         (String::from("html"), String::from("<p>Bye world.</p>\n"))
     ]);
 
     let expected_data_item_2: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("3")),
         (String::from("special-item"), String::from("true")),
         (String::from("date"), String::from("1992-09-17")),
         (String::from("html"), String::from(""))
@@ -145,6 +153,7 @@ fn when_has_test() {
         });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("3")),
         (String::from("special-item"), String::from("true")),
         (String::from("date"), String::from("1992-09-17")),
         (String::from("html"), String::from(""))
@@ -172,6 +181,7 @@ fn when_matches_test() {
         });
 
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("2")),
         (String::from("title"), String::from("Bye, World")),
         (String::from("date"), String::from("2022-01-01")),
         (String::from("html"), String::from("<p>Bye world.</p>\n"))
@@ -199,6 +209,7 @@ fn limit_test() {
         });
     
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("2")),
         (String::from("title"), String::from("Bye, World")),
         (String::from("date"), String::from("2022-01-01")),
         (String::from("html"), String::from("<p>Bye world.</p>\n"))
@@ -227,6 +238,7 @@ fn offset_test() {
         });
     
     let expected_data_item: HashMap<String, String> = HashMap::from([
+        (String::from("_id"), String::from("1")),
         (String::from("title"), String::from("Hello, World")),
         (String::from("date"), String::from("2020-01-01")),
         (String::from("html"), String::from("<p>Hi world.</p>\n"))
