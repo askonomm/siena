@@ -2,19 +2,13 @@ use std::{collections::HashMap, cmp::Ordering};
 use regex::Regex;
 use crate::providers::local::LocalProvider;
 
-#[derive(Debug, Default, Clone, Copy)]
-pub enum RecordParser {
-    #[default] FrontMatter,
-    Yaml,
-}
-
 #[derive(Debug)]
 pub enum RecordSortOrder {
     Asc,
     Desc,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum Store {
     #[default] None,
     
@@ -25,12 +19,12 @@ pub enum Store {
 
 pub trait StoreProvider {
     fn retrieve(&self, name: &str) -> Vec<HashMap<String, String>>;
+    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str);
 }
 
 #[derive(Debug, Default)]
 pub struct Siena {
     store: Store,
-    parser: RecordParser,
     records: Vec<HashMap<String, String>>,
 }
 
@@ -42,30 +36,30 @@ impl Siena {
         return self;
     }
 
-    pub fn set_parser(mut self, parser: RecordParser) -> Self {
-        self.parser = parser;
+    pub fn from_collection(&self, name: &str) -> Siena {
+        let store = self.store.clone();
+        let mut records = Vec::new();
 
-        return self;
-    }
-
-    pub fn from_collection(mut self, name: &str) -> Self {
         match self.store {
             Store::Local { ref directory } => {
                 let provider = LocalProvider {
-                    directory, 
-                    parser: self.parser,
+                    directory,
                 };
 
-                self.records = provider.retrieve(name);
+                records = provider.retrieve(name);
             }
 
             Store::None => ()
         }
 
-        return self;
+        return Siena {
+            store,
+            records,
+        }
     }
 
-    pub fn when_equals(mut self, key: &str, equals_value: &str) -> Self {
+    pub fn when_equals(&self, key: &str, equals_value: &str) -> Siena {
+        let store = self.store.clone();
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
@@ -74,12 +68,14 @@ impl Siena {
             }
         }
 
-        self.records = records;
-
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn when_not_equals(mut self, key: &str, equals_value: &str) -> Self {
+    pub fn when_not_equals(&self, key: &str, equals_value: &str) -> Siena {
+        let store = self.store.clone();
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         
         for record in &self.records {
@@ -88,12 +84,14 @@ impl Siena {
             }
         }
 
-        self.records = records;
-
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn when_has(mut self, key: &str) -> Self {
+    pub fn when_has(&self, key: &str) -> Siena {
+        let store = self.store.clone();
         let mut records: Vec<HashMap<String, String>> = Vec::new();
 
         for record in &self.records {
@@ -102,12 +100,14 @@ impl Siena {
             }
         }
 
-        self.records = records;
-
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn when_matches(mut self, key: &str, pattern: &str) -> Self {
+    pub fn when_matches(&self, key: &str, pattern: &str) -> Siena {
+        let store = self.store.clone();
         let mut records: Vec<HashMap<String, String>> = Vec::new();
         let re = Regex::new(pattern).unwrap();
 
@@ -117,13 +117,17 @@ impl Siena {
             }
         }
 
-        self.records = records;
-
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn sort(mut self, key: &str, order: RecordSortOrder) -> Self {
-        self.records.sort_by(|a, b| {
+    pub fn sort(&self, key: &str, order: RecordSortOrder) -> Siena {
+        let store = self.store.clone();
+        let mut records = self.records.clone();
+
+        records.sort_by(|a, b| {
             if a.get(key).is_some() && b.get(key).is_some() {
                 return match order {
                     RecordSortOrder::Asc => a.get(key).unwrap().cmp(b.get(key).unwrap()),
@@ -137,23 +141,38 @@ impl Siena {
             }
         });
 
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn limit(mut self, limit: usize) -> Self {
-        self.records.truncate(limit);
+    pub fn limit(&self, limit: usize) -> Siena {
+        let store = self.store.clone();
+        let mut records = self.records.clone();
 
-        return self;
+        records.truncate(limit);
+
+        return Siena {
+            store,
+            records,
+        };
     }
 
-    pub fn offset(mut self, offset: usize) -> Self {
-        if self.records.len() >= offset {
-            self.records.drain(0..offset);
+    pub fn offset(&self, offset: usize) -> Siena {
+        let store = self.store.clone();
+        let mut records = self.records.clone();
+
+        if records.len() >= offset {
+            records.drain(0..offset);
         } else {
-            self.records = Vec::new();
+            records = Vec::new();
         }
 
-        return self;
+        return Siena {
+            store,
+            records,
+        };
     }
 
     pub fn get_all(self) -> Vec<HashMap<String, String>> {
@@ -178,5 +197,21 @@ impl Siena {
         }
 
         return None;
+    }
+
+    pub fn update(&self, key: &str, value: &str) {
+        match self.store {
+            Store::Local { ref directory } => {
+                let provider = LocalProvider {
+                    directory, 
+                };
+
+                let records = self.records.clone();
+
+                provider.update(records, key, value);
+            }
+
+            Store::None => ()
+        }
     }
 }

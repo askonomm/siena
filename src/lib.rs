@@ -1,5 +1,5 @@
 pub mod siena;
-pub mod parsers;
+pub mod yaml;
 pub mod providers;
 
 #[cfg(test)]
