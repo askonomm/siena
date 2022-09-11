@@ -48,7 +48,9 @@ impl StoreProvider for LocalProvider<'_> {
         return records;
     }
 
-    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str) {
+    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str) -> Vec<HashMap<String, String>> {
+        let mut updated_records: Vec<HashMap<String, String>> = Vec::new();
+
         for mut record in records {
             let collection = record.get("_collection").unwrap();
             let file_name = record.get("_file_name").unwrap();
@@ -60,11 +62,16 @@ impl StoreProvider for LocalProvider<'_> {
                 .unwrap();
 
             record.insert(key.to_string(), value.to_string());
+
+            updated_records.push(record.clone());
+
             record.remove("_id");
             record.remove("_file_name");
             record.remove("_collection");
 
             serde_yaml::to_writer(file, &record).unwrap();
         }
+
+        return updated_records;
     }
 }

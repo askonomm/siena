@@ -19,7 +19,7 @@ pub enum Store {
 
 pub trait StoreProvider {
     fn retrieve(&self, name: &str) -> Vec<HashMap<String, String>>;
-    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str);
+    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str) -> Vec<HashMap<String, String>>;
 }
 
 #[derive(Debug, Default)]
@@ -199,19 +199,25 @@ impl Siena {
         return None;
     }
 
-    pub fn update(&self, key: &str, value: &str) {
+    pub fn update(&self, key: &str, value: &str) -> Siena {
+        let store = self.store.clone();
+        let mut records = self.records.clone();
+
         match self.store {
             Store::Local { ref directory } => {
                 let provider = LocalProvider {
                     directory, 
                 };
 
-                let records = self.records.clone();
-
-                provider.update(records, key, value);
+                records = provider.update(records, key, value);
             }
 
             Store::None => ()
+        }
+
+        return Siena {
+            store,
+            records,
         }
     }
 }
