@@ -274,7 +274,7 @@ fn update_test() {
     store
         .from_collection("demo")
         .when_equals("date", "1992-09-17")
-        .update("special-item", "false");
+        .set(Vec::from([("special-item", "false")]));
 
     let result = store
         .from_collection("demo")
@@ -295,7 +295,7 @@ fn update_test() {
     store
         .from_collection("demo")
         .when_equals("date", "1992-09-17")
-        .update("special-item", "true");
+        .set(Vec::from([("special-item", "true")]));
 
     let result_again = store
         .from_collection("demo")
@@ -311,6 +311,33 @@ fn update_test() {
         (String::from("date"), String::from("1992-09-17")),
     ]);
 
-    assert_eq!(result_again, expected_again);
+    assert!(result.eq(&expected) && result_again.eq(&expected_again))
+}
 
+#[test]
+fn create_test() {
+    let root_dir = env::current_dir().unwrap();
+
+    let store = Siena::default()
+        .set_store(Store::Local {
+            directory: format!("{}{}", root_dir.display().to_string().as_str(), "/test_data")
+        });
+
+    store
+        .create("demo2", "test3")
+        .set(Vec::from([("title", "Title goes here")]));
+
+    let result = store
+        .from_collection("demo2")
+        .get_first()
+        .unwrap();
+
+    let expected = HashMap::from([
+        (String::from("_id"), String::from("test3")),
+        (String::from("_collection"), String::from("demo2")),
+        (String::from("_file_name"), String::from("test3.yml")),
+        (String::from("title"), String::from("Title goes here"))
+    ]);
+
+    assert_eq!(result, expected);
 }

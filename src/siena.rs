@@ -19,7 +19,7 @@ pub enum Store {
 
 pub trait StoreProvider {
     fn retrieve(&self, name: &str) -> Vec<HashMap<String, String>>;
-    fn update(&self, records: Vec<HashMap<String, String>>, key: &str, value: &str) -> Vec<HashMap<String, String>>;
+    fn set(&self, records: Vec<HashMap<String, String>>, data: Vec<(&str, &str)>) -> Vec<HashMap<String, String>>;
 }
 
 #[derive(Debug, Default)]
@@ -199,7 +199,7 @@ impl Siena {
         return None;
     }
 
-    pub fn update(&self, key: &str, value: &str) -> Siena {
+    pub fn set(&self, data: Vec<(&str, &str)>) -> Siena {
         let store = self.store.clone();
         let mut records = self.records.clone();
 
@@ -209,11 +209,28 @@ impl Siena {
                     directory, 
                 };
 
-                records = provider.update(records, key, value);
+                records = provider.set(records, data);
             }
 
             Store::None => ()
         }
+
+        return Siena {
+            store,
+            records,
+        }
+    }
+
+    pub fn create(&self, collection: &str, id: &str) -> Siena {
+        let store = self.store.clone();
+        let mut records = Vec::new();
+        let mut record: HashMap<String, String> = HashMap::new();
+
+        record.insert("_id".to_string(), id.to_string());
+        record.insert("_collection".to_string(), collection.to_string());
+        record.insert("_file_name".to_string(), format!("{}.yml", id));
+
+        records.push(record);
 
         return Siena {
             store,
