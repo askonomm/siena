@@ -8,8 +8,12 @@ Siena is a flat-file (YAML) ORM for Rust, enabling you to easily use flat-file d
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "1.3.1"
+siena = "1.3.2"
 ```
+
+## Changelog
+
+To see what's changed, check the [changelog](https://git.sr.ht/~asko/siena/tree/master/item/CHANGELOG.md).
 
 ## Usage
 
@@ -28,7 +32,7 @@ let store = Siena::default().set_store(Store::Local {
 ```
 
 Currently, only the `Local` store is supported which enables you to use the local disk for the storage of 
-data by giving a specified `directory` to read from, and to write to, but there are plans to enable more Stores in the future, such as S3-compatible services. 
+data by giving a specified `directory` to read from, and to write to. There are plans to enable more Stores in the future, such as S3-compatible services.
 
 ### Fetching Records
 

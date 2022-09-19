@@ -1,5 +1,11 @@
 # Changelog
 
+### 1.3.2
+
+_2022-09-19_
+
+- Added the ability to `sort` records using the system-level `id`.
+
 ### 1.3.1
 
 _2022-09-19_

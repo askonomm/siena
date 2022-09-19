@@ -186,6 +186,13 @@ impl Siena {
         let mut records = self.records.clone();
 
         records.sort_by(|a, b| {
+            if key == "id" {
+                return match order {
+                    RecordSortOrder::Asc => a.id.cmp(&b.id),
+                    RecordSortOrder::Desc => b.id.cmp(&a.id)
+                }
+            }
+
             if a.data.get(key).is_some() && b.data.get(key).is_some() {
                 return match order {
                     RecordSortOrder::Asc => a.data.get(key).unwrap().cmp(b.data.get(key).unwrap()),
