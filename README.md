@@ -8,7 +8,7 @@ Siena is a flat-file (YAML) ORM for Rust, enabling you to easily use flat-file d
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "1.3.0"
+siena = "1.3.1"
 ```
 
 ## Usage

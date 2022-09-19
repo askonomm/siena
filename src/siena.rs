@@ -1,8 +1,9 @@
 use std::{collections::HashMap, cmp::Ordering};
 use regex::Regex;
+use serde::{Serialize, Deserialize};
 use crate::providers::local::LocalProvider;
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Record {
     pub id: String,
     pub collection: String,
@@ -42,7 +43,7 @@ impl Siena {
     pub fn set_store(mut self, store: Store) -> Self {
         self.store = store;
 
-        return self;
+        self
     }
 
     // Fetch records from a collection with a given `name`. A collection
@@ -76,8 +77,16 @@ impl Siena {
         let mut records: Vec<Record> = Vec::new();
         
         for record in &self.records {
+            if key == "id" && record.id == equals_value {
+                records.push(record.clone());
+
+                continue;
+            }
+
             if record.data.contains_key(key) && record.data[key] == equals_value {
                 records.push(record.clone());
+
+                continue;
             }
         }
 
@@ -93,8 +102,16 @@ impl Siena {
         let mut records: Vec<Record> = Vec::new();
         
         for record in &self.records {
+            if key == "id" && record.id != equals_value {
+                records.push(record.clone());
+
+                continue;
+            }
+
             if record.data.contains_key(key) && record.data[key] != equals_value || !record.data.contains_key(key) {
                 records.push(record.clone());
+
+                continue;
             }
         }
 
@@ -145,8 +162,15 @@ impl Siena {
         let re = Regex::new(pattern).unwrap();
 
         for record in &self.records {
+            if key == "id" && re.is_match(record.id.as_str()) {
+                records.push(record.clone());
+
+                continue;
+            }
             if record.data.contains_key(key) && re.is_match(record.data[key].as_str()) {
                 records.push(record.clone());
+
+                continue;
             }
         }
 
