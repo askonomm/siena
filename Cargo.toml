@@ -6,7 +6,7 @@ version = "1.3.2"
 edition = "2021"
 authors = ["Asko Nõmm <ano@ano.ee>"]
 license = "MIT"
-keywords = ["frontmatter", "yaml", "orm", "database"]
+keywords = ["yaml", "orm", "database"]
 categories = ["database", "filesystem"]
 
 [dependencies]

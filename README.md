@@ -53,7 +53,7 @@ as much as you want.
 
 #### `when_is`
 
-To filter records by a record key that equals a given value, you can use the `when_equals` method, like so:
+To filter records by a record key that equals a given value, you can use the `when_is` method, like so:
 
 ```rust
 let posts = store
@@ -208,7 +208,7 @@ where to write data.
 An example:
 
 ```rust
-let posts = store
+store
     .create("blog-posts", "hello-world")
     .set(Vec::from([("title", "Hello, World.")]));
 ```
