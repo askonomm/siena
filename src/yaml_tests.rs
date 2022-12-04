@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::parsers::yaml;
+use crate::yaml;
 
 #[test]
 fn yaml_generic_test() {

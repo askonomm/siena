@@ -1,14 +1,12 @@
 # Siena
 
-[![builds.sr.ht status](https://builds.sr.ht/~asko/siena/commits/master/tests.yml.svg)](https://builds.sr.ht/~asko/siena/commits/master/tests.yml?)
-
-Siena is a flat-file (YAML) ORM for Rust, enabling you to easily use flat-file data stores for your application.
+Siena is a flat-file (YAML, FrontMatter) ORM for Rust, enabling you to easily use flat-file data stores for your application.
 
 ## Install
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "1.3.2"
+siena = "1.4.0"
 ```
 
 ## Changelog

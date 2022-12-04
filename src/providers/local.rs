@@ -1,6 +1,6 @@
-use std::{fs};
-use crate::{siena::{StoreProvider}, yaml};
-use crate::siena::Record;
+use std::{collections::HashMap, io::Write};
+use std::fs;
+use crate::{siena::{StoreProvider, Record}, yaml, utils::string_ends_with_any, frontmatter};
 
 pub struct LocalProvider<'a> {
     pub directory: &'a str,
@@ -20,7 +20,7 @@ impl StoreProvider for LocalProvider<'_> {
             let file_path = file.as_ref().unwrap().path();
             let file_path_str = file_path.to_str().clone().unwrap();
 
-            if !file_path_str.ends_with(".yaml") && !file_path_str.ends_with(".yml") {
+            if !string_ends_with_any(file_path_str, Vec::from(["yml", "yaml", "md", "markdown"])) {
                 continue;
             }
 
@@ -35,12 +35,22 @@ impl StoreProvider for LocalProvider<'_> {
                         .replace(".yaml", "")
                         .replace(".md", "")
                         .replace(".markdown", "");
+                    
+                    let mut data = HashMap::new();
+
+                    if string_ends_with_any(file_path_str, Vec::from(["yml", "yaml"])) {
+                        data = yaml::parse(&contents.as_ref().unwrap());
+                    }
+
+                    if string_ends_with_any(file_path_str, Vec::from(["md", "markdown"])) {
+                        data = frontmatter::parse(&contents.as_ref().unwrap());
+                    }
 
                     records.push(Record {
                         id,
                         collection: name.to_string(),
                         file_name: file_name.to_str().unwrap().to_string(),
-                        data: yaml::parse(&contents.unwrap())
+                        data,
                     });
                 }
             }
@@ -72,7 +82,19 @@ impl StoreProvider for LocalProvider<'_> {
 
             updated_records.push(record.clone());
 
-            serde_yaml::to_writer(file, &record.data).unwrap();
+            // yaml 
+            if string_ends_with_any(record.file_name.as_ref(), Vec::from(["yml", "yaml"])) {
+                serde_yaml::to_writer(file, &record.data).unwrap();
+            }
+
+            // frontmatter
+            if string_ends_with_any(record.file_name.as_ref(), Vec::from(["md", "markdown"])) {
+                let meta = record.data.clone();
+                let markdown = record.data.get("content_raw").unwrap();
+                let frontmatter = serde_frontmatter::serialize(meta, markdown).unwrap();
+
+                fs::write(format!("{}/{}", directory, record.file_name), frontmatter).unwrap();
+            }
         }
 
         return updated_records;
