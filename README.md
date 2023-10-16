@@ -6,7 +6,7 @@ Siena is a flat-file (YAML, FrontMatter) ORM for Rust, enabling you to easily us
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "2.0.0"
+siena = "2.0.1"
 ```
 
 ## Changelog
