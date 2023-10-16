@@ -6,7 +6,7 @@ Siena is a flat-file (YAML, FrontMatter) ORM for Rust, enabling you to easily us
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "2.0.1"
+siena = "2.0.2"
 ```
 
 ## Changelog
@@ -24,8 +24,8 @@ Siena comes with the `LocalProvider` provider, which works on the local file sys
 **Example:**
 
 ```rust
-use crate::providers::local::LocalProvider;
-use crate::siena::siena;
+use siena::providers::local::LocalProvider;
+use siena::siena::siena;
 
 fn main() {
     let provider = LocalProvider { directory: "./path".to_string() };
