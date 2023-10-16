@@ -6,7 +6,7 @@ Siena is a flat-file (YAML, FrontMatter) ORM for Rust, enabling you to easily us
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "1.4.1"
+siena = "2.0.0"
 ```
 
 ## Changelog
@@ -15,22 +15,23 @@ To see what's changed, check the [changelog](https://git.sr.ht/~asko/siena/tree/
 
 ## Usage
 
-### Setting Store
+### Create store
 
-The first thing you need to do when using Siena, is setting the Store. This will tell Siena to use a correct provider for getting and setting data. 
+The first thing you need to do when using Siena is creating the store. A store is an instance of Siena with the data 
+provider set. A data provider is anything that implements the `StoreProvider` trait (so you can create your own!). 
+Siena comes with the `LocalProvider` provider, which works on the local file system.
 
 **Example:**
 
 ```rust
-use siena::siena::{Store, Siena};
+use crate::providers::local::LocalProvider;
+use crate::siena::siena;
 
-let store = Siena::default().set_store(Store::Local {
-    directory: "./path-to-somewhere".to_string()
-});
+fn main() {
+    let provider = LocalProvider { directory: "./path".to_string() };
+    let store = siena(provider);
+}
 ```
-
-Currently, only the `Local` store is supported which enables you to use the local disk for the storage of 
-data by giving a specified `directory` to read from, and to write to. There are plans to enable more Stores in the future, such as S3-compatible services.
 
 ### Fetching Records
 
@@ -212,3 +213,15 @@ store
 ```
 
 The `create` method takes two arguments, the collection name, and the ID of the record, which has to be unique to that collection or it will overwrite an existing record.
+
+### Deleting Records
+
+The `delete` method is what you use for deleting all the records matching a query, so for example if you want to 
+delete all records matching the status "draft", you'd run this:
+
+```rust
+store
+    .collection("blog-posts")
+    .when_is("status", "draft")
+    .delete();
+```
