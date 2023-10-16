@@ -1,7 +1,7 @@
-use std::{collections::HashMap, cmp::Ordering};
 use regex::Regex;
-use serde::{Serialize, Deserialize};
-use crate::providers::local::LocalProvider;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Record {
@@ -15,33 +15,32 @@ pub struct Record {
 pub enum RecordSortOrder {
     Asc,
     Desc,
-}
-
-#[derive(Debug, Default, Clone)]
-pub enum Store {
-    #[default] None,
-    
-    Local {
-        directory: String
-    }
+    Custom(fn(String, String) -> Ordering),
 }
 
 pub trait StoreProvider {
     fn retrieve(&self, name: &str) -> Vec<Record>;
     fn set(&self, records: Vec<Record>, data: Vec<(&str, &str)>) -> Vec<Record>;
+    fn delete(&self, records: Vec<Record>);
 }
 
-#[derive(Debug, Default)]
+impl Debug for dyn StoreProvider {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "StoreProvider")
+    }
+}
+
+#[derive(Debug)]
 pub struct Siena {
-    store: Store,
-    records: Vec<Record>,
+    pub(crate) records: Vec<Record>,
+    pub(crate) provider: Box<dyn StoreProvider>,
 }
 
 impl Siena {
     // Sets the type of store being used which will change the provider
     // being used to fetch, create and manipulate records.
-    pub fn set_store(mut self, store: Store) -> Self {
-        self.store = store;
+    pub fn set_provider(mut self, provider: impl StoreProvider + 'static) -> Self {
+        self.provider = Box::new(provider);
 
         self
     }
@@ -49,201 +48,153 @@ impl Siena {
     // Fetch records from a collection with a given `name`. A collection
     // is a directory in your Store, and a record is a YAML file in that
     // directory.
-    pub fn collection(&self, name: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records = Vec::new();
+    pub fn collection(mut self, name: &str) -> Siena {
+        self.records = self.provider.retrieve(name);
 
-        match self.store {
-            Store::Local { ref directory } => {
-                let provider = LocalProvider {
-                    directory,
-                };
-
-                records = provider.retrieve(name);
-            }
-
-            Store::None => ()
-        }
-
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Filter records based on value equality for a key.
-    pub fn when_is(&self, key: &str, equals_value: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records: Vec<Record> = Vec::new();
-        
-        for record in &self.records {
-            if key == "id" && record.id == equals_value {
-                records.push(record.clone());
+    pub fn when_is(mut self, key: &str, equals_value: &str) -> Siena {
+        self.records = self
+            .records
+            .into_iter()
+            .filter(|r| {
+                if key == "id" && r.id == equals_value {
+                    return true;
+                }
 
-                continue;
-            }
+                if r.data.contains_key(key) && r.data[key] == equals_value {
+                    return true;
+                }
 
-            if record.data.contains_key(key) && record.data[key] == equals_value {
-                records.push(record.clone());
+                return false;
+            })
+            .collect();
 
-                continue;
-            }
-        }
-
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Filter records based on value inequality for a key.
-    pub fn when_isnt(&self, key: &str, equals_value: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records: Vec<Record> = Vec::new();
-        
-        for record in &self.records {
-            if key == "id" && record.id != equals_value {
-                records.push(record.clone());
+    pub fn when_isnt(mut self, key: &str, equals_value: &str) -> Siena {
+        self.records = self
+            .records
+            .into_iter()
+            .filter(|r| {
+                if key == "id" && r.id != equals_value {
+                    return true;
+                }
 
-                continue;
-            }
+                let contains_k = r.data.contains_key(key);
 
-            if record.data.contains_key(key) && record.data[key] != equals_value || !record.data.contains_key(key) {
-                records.push(record.clone());
+                if (contains_k && r.data[key] != equals_value) || !contains_k {
+                    return true;
+                }
 
-                continue;
-            }
-        }
+                return false;
+            })
+            .collect();
 
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Filter records based on key presence.
-    pub fn when_has(&self, key: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records: Vec<Record> = Vec::new();
+    pub fn when_has(mut self, key: &str) -> Siena {
+        self.records = self
+            .records
+            .into_iter()
+            .filter(|r| r.data.contains_key(key))
+            .collect();
 
-        for record in &self.records {
-            if record.data.contains_key(key) {
-                records.push(record.clone());
-            }
-        }
-
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Filter records based on key lack of presence.
-    pub fn when_hasnt(&self, key: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records: Vec<Record> = Vec::new();
+    pub fn when_hasnt(mut self, key: &str) -> Siena {
+        self.records = self
+            .records
+            .into_iter()
+            .filter(|r| !r.data.contains_key(key))
+            .collect();
 
-        for record in &self.records {
-            if !record.data.contains_key(key) {
-                records.push(record.clone());
-            }
-        }
-
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Filter records based on value matching a regex pattern for a key.
-    pub fn when_matches(&self, key: &str, pattern: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records: Vec<Record> = Vec::new();
+    pub fn when_matches(mut self, key: &str, pattern: &str) -> Siena {
         let re = Regex::new(pattern).unwrap();
 
-        for record in &self.records {
-            if key == "id" && re.is_match(record.id.as_str()) {
-                records.push(record.clone());
+        self.records = self
+            .records
+            .into_iter()
+            .filter(|r| {
+                if key == "id" && re.is_match(r.id.as_str()) {
+                    return true;
+                }
 
-                continue;
-            }
-            if record.data.contains_key(key) && re.is_match(record.data[key].as_str()) {
-                records.push(record.clone());
+                if r.data.contains_key(key) && re.is_match(r.data[key].as_str()) {
+                    return true;
+                }
 
-                continue;
-            }
-        }
+                return false;
+            })
+            .collect();
 
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Sort records by a value for a key in `RecordSortOrder`.
-    pub fn sort(&self, key: &str, order: RecordSortOrder) -> Siena {
-        let store = self.store.clone();
-        let mut records = self.records.clone();
-
-        records.sort_by(|a, b| {
+    pub fn sort(mut self, key: &str, order: RecordSortOrder) -> Siena {
+        self.records.sort_by(|a, b| {
             if key == "id" {
                 return match order {
                     RecordSortOrder::Asc => a.id.cmp(&b.id),
-                    RecordSortOrder::Desc => b.id.cmp(&a.id)
-                }
+                    RecordSortOrder::Desc => b.id.cmp(&a.id),
+                    RecordSortOrder::Custom(f) => f(a.clone().id, b.clone().id),
+                };
             }
 
             if a.data.get(key).is_some() && b.data.get(key).is_some() {
+                let a_key = a.data.get(key).unwrap();
+                let b_key = b.data.get(key).unwrap();
+
                 return match order {
-                    RecordSortOrder::Asc => a.data.get(key).unwrap().cmp(b.data.get(key).unwrap()),
-                    RecordSortOrder::Desc => b.data.get(key).unwrap().cmp(a.data.get(key).unwrap())
-                }
+                    RecordSortOrder::Asc => a_key.cmp(b_key),
+                    RecordSortOrder::Desc => b_key.cmp(a_key),
+                    RecordSortOrder::Custom(f) => f(a_key.clone(), b_key.clone()),
+                };
             }
-    
+
             match order {
                 RecordSortOrder::Asc => Ordering::Greater,
-                RecordSortOrder::Desc => Ordering::Less
+                RecordSortOrder::Desc => Ordering::Less,
+                _ => Ordering::Less,
             }
         });
 
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Limit records.
-    pub fn limit(&self, limit: usize) -> Siena {
-        let store = self.store.clone();
-        let mut records = self.records.clone();
+    pub fn limit(mut self, limit: usize) -> Siena {
+        self.records.truncate(limit);
 
-        records.truncate(limit);
-
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Offset records.
-    pub fn offset(&self, offset: usize) -> Siena {
-        let store = self.store.clone();
-        let mut records = self.records.clone();
-
-        if records.len() >= offset {
-            records.drain(0..offset);
+    pub fn offset(mut self, offset: usize) -> Siena {
+        if self.records.len() >= offset {
+            self.records.drain(0..offset);
         } else {
-            records = Vec::new();
+            self.records = Vec::new();
         }
 
-        Siena {
-            store,
-            records,
-        }
+        self
     }
 
     // Paginate records.
-    pub fn paginate(&self, page: usize, limit: usize) -> Siena {
+    pub fn paginate(self, page: usize, limit: usize) -> Siena {
         self.offset((page - 1) * limit).limit(limit)
     }
 
@@ -255,9 +206,7 @@ impl Siena {
     // Get first record.
     pub fn get_first(self) -> Option<Record> {
         if self.records.first().is_some() {
-            let first_item = self.records.first().unwrap().clone();
-
-            return Some(first_item);
+            return Some(self.records.first().unwrap().clone());
         }
 
         None
@@ -266,9 +215,7 @@ impl Siena {
     // Get last record.
     pub fn get_last(self) -> Option<Record> {
         if self.records.last().is_some() {
-            let last_item = self.records.last().unwrap().clone();
-
-            return Some(last_item);
+            return Some(self.records.last().unwrap().clone());
         }
 
         None
@@ -276,26 +223,13 @@ impl Siena {
 
     // Set a Vector of tuples (key, value) in all records queried,
     // and persist them on file.
-    pub fn set(&self, data: Vec<(&str, &str)>) -> Siena {
-        let store = self.store.clone();
-        let mut records = self.records.clone();
+    pub fn set(self, data: Vec<(&str, &str)>) {
+        self.provider.set(self.records.clone(), data);
+    }
 
-        match self.store {
-            Store::Local { ref directory } => {
-                let provider = LocalProvider {
-                    directory, 
-                };
-
-                records = provider.set(records, data);
-            }
-
-            Store::None => ()
-        }
-
-        Siena {
-            store,
-            records,
-        }
+    // Delete all records queried from disk.
+    pub fn delete(self) {
+        self.provider.delete(self.records.clone());
     }
 
     // Create a new record in a `collection` with the given `id`.
@@ -305,20 +239,21 @@ impl Siena {
     //
     // Also note: if the record with such an `id` in given `collection` already
     // exists, it will be overwritten.
-    pub fn create(&self, collection: &str, id: &str) -> Siena {
-        let store = self.store.clone();
-        let mut records = Vec::new();
-
-        records.push(Record {
+    pub fn create(mut self, collection: &str, id: &str) -> Siena {
+        self.records.push(Record {
             id: id.to_string(),
             collection: collection.to_string(),
             file_name: format!("{}.yml", id),
-            data: HashMap::new()
+            data: HashMap::new(),
         });
 
-        Siena {
-            store,
-            records,
-        }
+        self
+    }
+}
+
+pub fn siena(provider: impl StoreProvider + 'static) -> Siena {
+    Siena {
+        records: vec![],
+        provider: Box::new(provider),
     }
 }

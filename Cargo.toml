@@ -2,16 +2,16 @@
 name = "siena"
 description = "A flat-file database and ORM."
 repository = "https://github.com/askonomm/siena"
-version = "1.4.1"
+version = "2.0.0"
 edition = "2021"
-authors = ["Asko Nõmm <ano@ano.ee>"]
+authors = ["Asko Nõmm <asko@asko.dev>"]
 license = "MIT"
 keywords = ["yaml", "frontmatter", "orm", "database"]
 categories = ["database", "filesystem"]
 
 [dependencies]
-regex = "1"
-comrak = "0.15"
+regex = "1.10.0"
+comrak = "0.19.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde-frontmatter = "0.1.0"
