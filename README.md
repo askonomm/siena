@@ -234,31 +234,13 @@ store
 
 The `LocalProvider` is a provider that works on the local file system. It supports YAML and Markdown (FrontMatter) files. In the case of Markdown files, the `Record`'s returned will have `content` and `content_raw` String entries, one for the rendered HTML and one for the raw Markdown, respectively.
 
-When using YAML files for Records, make sure to prepend values with a `!tag` so that Siena knows how to parse them. For example, if you want to store a string, you'd do this:
-
-```yaml
-title: !Str Hello, World
-```
-
-Or a Vector:
-
-```yaml
-people: !Vec [!Str John, !Str Peter]
-```
-
-Or a HashMap:
-
-```yaml
-person: !Map { name: !Str John, age: !Int 30 }
-```
-
 Supported data types are: 
 
-- `!Str` => `String`
-- `!Num` => `usize`
-- `!Bool` => `bool`
-- `!Map` => `HashMap<String, RecordData>`
-- `!Vec` => `Vec<RecordData>`
+- `String`
+- `usize`
+- `bool`
+- `HashMap<String, RecordData>`
+- `Vec<RecordData>`
 
 ### Custom Providers
 

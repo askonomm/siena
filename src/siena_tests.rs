@@ -403,5 +403,10 @@ fn create_test() {
         )]),
     };
 
+    siena(provider.clone())
+        .collection("demo2")
+        .when_is("id", "test3")
+        .delete();
+
     assert_eq!(result, expected);
 }

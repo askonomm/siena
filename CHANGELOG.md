@@ -1,5 +1,11 @@
 # Changelog
 
+### 3.0.1
+
+_2023_10_22_
+
+YAML data is now untagged, meaning no need to use YAML tags to specify data type, the parser will figure it out for you.
+
 ### 3.0
 
 _2023_10_21_

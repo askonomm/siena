@@ -44,7 +44,7 @@ pub fn parse(contents: &str) -> Result<HashMap<String, RecordData>, FrontMatterE
 
 #[test]
 fn parse_test() -> Result<(), FrontMatterError> {
-    let seed = "---\ntitle: !Str Hello, World\n---\n\nHi there.";
+    let seed = "---\ntitle: Hello, World\n---\n\nHi there.";
     let expected: HashMap<String, RecordData> = HashMap::from([
         (
             String::from("title"),

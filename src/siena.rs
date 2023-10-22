@@ -4,6 +4,7 @@ use std::fmt::Debug;
 use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
 pub enum RecordData {
     Str(String),
     Num(usize),

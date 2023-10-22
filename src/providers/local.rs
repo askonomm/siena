@@ -121,11 +121,7 @@ impl StoreProvider for LocalProvider {
             if str_ends_with_any(record.file_name.as_ref(), Vec::from(["md", "markdown"])) {
                 let meta = record.data.clone();
 
-                match record
-                    .data
-                    .get("content_raw")
-                    .unwrap_or(&RecordData::Str(String::from("")))
-                {
+                match record.data.get("content_raw").unwrap() {
                     RecordData::Str(md) => {
                         let fm = serde_frontmatter::serialize(meta, md).unwrap_or(String::from(""));
                         let file_path = format!("{}/{}", directory, record.file_name);
