@@ -1,11 +1,50 @@
+use thiserror::Error;
+
 use crate::{
     frontmatter,
-    siena::{Record, StoreProvider},
+    siena::{Record, RecordData, StoreProvider},
     utils::str_ends_with_any,
-    yaml,
 };
-use std::collections::HashMap;
 use std::fs;
+use std::{collections::HashMap, fs::DirEntry};
+
+#[derive(Error, Debug)]
+pub enum ParseError {
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+}
+
+fn parse_file(file: &DirEntry, collection: &str) -> Result<Record, ParseError> {
+    let contents = fs::read_to_string(file.path())?;
+    let file_name = file.file_name();
+    let mut data = HashMap::new();
+    let id = file_name
+        .to_str()
+        .unwrap()
+        .replace(".yml", "")
+        .replace(".yaml", "")
+        .replace(".md", "")
+        .replace(".markdown", "");
+
+    if str_ends_with_any(file.path().to_str().unwrap(), Vec::from(["yml", "yaml"])) {
+        if let Ok(yaml) = serde_yaml::from_str(&contents) {
+            data = yaml;
+        }
+    }
+
+    if str_ends_with_any(file.path().to_str().unwrap(), Vec::from(["md", "markdown"])) {
+        if let Ok(fm) = frontmatter::parse(&contents) {
+            data = fm;
+        }
+    }
+
+    Ok(Record {
+        id,
+        collection: collection.to_string(),
+        file_name: file_name.to_str().unwrap().to_string(),
+        data,
+    })
+}
 
 #[derive(Clone)]
 pub struct LocalProvider {
@@ -33,34 +72,8 @@ impl StoreProvider for LocalProvider {
 
             // If we made it this far, continue with parsing
             if file.as_ref().is_ok() {
-                let contents = fs::read_to_string(file.as_ref().unwrap().path());
-
-                if contents.is_ok() {
-                    let file_name = file.as_ref().unwrap().file_name();
-                    let id = file_name
-                        .to_str()
-                        .unwrap()
-                        .replace(".yml", "")
-                        .replace(".yaml", "")
-                        .replace(".md", "")
-                        .replace(".markdown", "");
-
-                    let mut data = HashMap::new();
-
-                    if str_ends_with_any(file_path_str, Vec::from(["yml", "yaml"])) {
-                        data = yaml::parse(&contents.as_ref().unwrap());
-                    }
-
-                    if str_ends_with_any(file_path_str, Vec::from(["md", "markdown"])) {
-                        data = frontmatter::parse(&contents.as_ref().unwrap());
-                    }
-
-                    records.push(Record {
-                        id,
-                        collection: name.to_string(),
-                        file_name: file_name.to_str().unwrap().to_string(),
-                        data,
-                    });
+                if let Ok(record) = parse_file(&file.unwrap(), &name) {
+                    records.push(record);
                 }
             }
         }
@@ -68,7 +81,7 @@ impl StoreProvider for LocalProvider {
         return records;
     }
 
-    fn set(&self, records: Vec<Record>, data: Vec<(&str, &str)>) -> Vec<Record> {
+    fn set(&self, records: Vec<Record>, data: Vec<(&str, &RecordData)>) -> Vec<Record> {
         let mut updated_records: Vec<Record> = Vec::new();
 
         for mut record in records {
@@ -91,7 +104,7 @@ impl StoreProvider for LocalProvider {
             for data_item in data.clone() {
                 record
                     .data
-                    .insert(data_item.0.to_string(), data_item.1.to_string());
+                    .insert(data_item.0.to_string(), data_item.1.clone());
             }
 
             updated_records.push(record.clone());
@@ -107,14 +120,21 @@ impl StoreProvider for LocalProvider {
             // frontmatter
             if str_ends_with_any(record.file_name.as_ref(), Vec::from(["md", "markdown"])) {
                 let meta = record.data.clone();
-                let default_markdown = String::from("");
-                let markdown = record.data.get("content_raw").unwrap_or(&default_markdown);
-                let frontmatter =
-                    serde_frontmatter::serialize(meta, markdown).unwrap_or(String::from(""));
-                let file_path = format!("{}/{}", directory, record.file_name);
 
-                fs::write(&file_path, frontmatter)
-                    .expect(&format!("Could not write to {}", file_path));
+                match record
+                    .data
+                    .get("content_raw")
+                    .unwrap_or(&RecordData::Str(String::from("")))
+                {
+                    RecordData::Str(md) => {
+                        let fm = serde_frontmatter::serialize(meta, md).unwrap_or(String::from(""));
+                        let file_path = format!("{}/{}", directory, record.file_name);
+
+                        fs::write(&file_path, fm)
+                            .expect(&format!("Could not write to {}", file_path));
+                    }
+                    _ => (),
+                }
             }
         }
 

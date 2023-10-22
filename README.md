@@ -1,17 +1,19 @@
 # Siena
 
-Siena is a flat-file (YAML, FrontMatter) ORM for Rust, enabling you to easily use flat-file data stores for your application.
+Siena is data provider agnostic ORM for Rust, enabling you to easily use custom data stores for your application with all the niceties of a quering engine. 
+
+Siena comes built-in with a flat-file data provider, `LocalProvider`, supporting YAML and FrontMatter files, but you can easily create your own data provider by implementing the `StoreProvider` trait.
 
 ## Install
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "2.0.2"
+siena = "3.0.0"
 ```
 
 ## Changelog
 
-To see what's changed, check the [changelog](https://git.sr.ht/~asko/siena/tree/master/item/CHANGELOG.md).
+To see what's changed, check the [changelog](https://github.com/askonomm/siena/blob/master/CHANGELOG.md).
 
 ## Usage
 
@@ -61,7 +63,7 @@ let posts = store
     .get_all();
 ```
 
-#### `when_isnt`
+#### `when_is_not`
 
 Similarly, to filter records the opposite way, by a record key that does _not_ equal a given value, you can use the 
 `when_isnt` method: 
@@ -69,7 +71,7 @@ Similarly, to filter records the opposite way, by a record key that does _not_ e
 ```rust
 let posts = store
     .collection("blog-posts")
-    .when_isnt("status", "published")
+    .when_is_not("status", "published")
     .get_all();
 ```
 
@@ -84,14 +86,14 @@ let posts = store
     .get_all();
 ```
 
-#### `when_hasnt`
+#### `when_has_not`
 
 Similarly, to filter records the opposite way, by the _lack_ of a presence of a record key, you can use the `when_hasnt` method:
 
 ```rust
 let posts = store
     .collection("blog-posts")
-    .when_hasnt("status")
+    .when_has_not("status")
     .get_all();
 ```
 
@@ -225,3 +227,59 @@ store
     .when_is("status", "draft")
     .delete();
 ```
+
+## Providers
+
+### `LocalProvider`
+
+The `LocalProvider` is a provider that works on the local file system. It supports YAML and Markdown (FrontMatter) files. In the case of Markdown files, the `Record`'s returned will have `content` and `content_raw` String entries, one for the rendered HTML and one for the raw Markdown, respectively.
+
+When using YAML files for Records, make sure to prepend values with a `!tag` so that Siena knows how to parse them. For example, if you want to store a string, you'd do this:
+
+```yaml
+title: !Str Hello, World
+```
+
+Or a Vector:
+
+```yaml
+people: !Vec [!Str John, !Str Peter]
+```
+
+Or a HashMap:
+
+```yaml
+person: !Map { name: !Str John, age: !Int 30 }
+```
+
+Supported data types are: 
+
+- `!Str` => `String`
+- `!Num` => `usize`
+- `!Bool` => `bool`
+- `!Map` => `HashMap<String, RecordData>`
+- `!Vec` => `Vec<RecordData>`
+
+### Custom Providers
+
+You can create your own provider by implementing the `StoreProvider` trait. The trait has three methods that you need to implement:
+
+```rust
+pub trait StoreProvider {
+    fn retrieve(&self, name: &str) -> Vec<Record>;
+    fn set(&self, records: Vec<Record>, data: Vec<(&str, &RecordData)>) -> Vec<Record>;
+    fn delete(&self, records: Vec<Record>);
+}
+```
+
+#### The `retrieve` function
+
+This function should take in a `name` of a data collection, e.g `posts` and return all `Record`'s for that.
+
+#### The `set` function
+
+This function should take in a `Vec<Record>` and a `Vec<(&str, &RecordData)>` and return a `Vec<Record>`. The `Vec<Record>` is the records that you want to update, and the `Vec<(&str, &RecordData)>` is the data that you want to update them with. The `&str` is the key of the data, and the `&RecordData` is the value. 
+
+#### The `delete` function
+
+This function should take in a `Vec<Record>` and delete them.

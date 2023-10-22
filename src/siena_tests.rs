@@ -1,5 +1,5 @@
 use crate::providers::local::LocalProvider;
-use crate::siena::{siena, Record, RecordSortOrder};
+use crate::siena::{siena, Record, RecordData, RecordSortOrder};
 use std::{collections::HashMap, env};
 
 fn record_1() -> Record {
@@ -8,8 +8,14 @@ fn record_1() -> Record {
         collection: String::from("demo"),
         file_name: String::from("test.yaml"),
         data: HashMap::from([
-            (String::from("title"), String::from("Bye, world")),
-            (String::from("date"), String::from("2022-09-10")),
+            (
+                String::from("title"),
+                RecordData::Str(String::from("Bye, world")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("2022-09-10")),
+            ),
         ]),
     }
 }
@@ -20,8 +26,14 @@ fn record_2() -> Record {
         collection: String::from("demo"),
         file_name: String::from("test2.yml"),
         data: HashMap::from([
-            (String::from("title"), String::from("Hello, world")),
-            (String::from("date"), String::from("2022-09-09")),
+            (
+                String::from("title"),
+                RecordData::Str(String::from("Hello, world")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("2022-09-09")),
+            ),
         ]),
     }
 }
@@ -32,8 +44,14 @@ fn record_3() -> Record {
         collection: String::from("demo"),
         file_name: String::from("2.yml"),
         data: HashMap::from([
-            (String::from("title"), String::from("Bye, World")),
-            (String::from("date"), String::from("2022-01-01")),
+            (
+                String::from("title"),
+                RecordData::Str(String::from("Bye, World")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("2022-01-01")),
+            ),
         ]),
     }
 }
@@ -44,8 +62,14 @@ fn record_4() -> Record {
         collection: String::from("demo"),
         file_name: String::from("1.yml"),
         data: HashMap::from([
-            (String::from("title"), String::from("Hello, World")),
-            (String::from("date"), String::from("2020-01-01")),
+            (
+                String::from("title"),
+                RecordData::Str(String::from("Hello, World")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("2020-01-01")),
+            ),
         ]),
     }
 }
@@ -56,8 +80,14 @@ fn record_5() -> Record {
         collection: String::from("demo"),
         file_name: String::from("3.yml"),
         data: HashMap::from([
-            (String::from("special-item"), String::from("true")),
-            (String::from("date"), String::from("1992-09-17")),
+            (
+                String::from("special-item"),
+                RecordData::Str(String::from("true")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("1992-09-17")),
+            ),
         ]),
     }
 }
@@ -107,7 +137,7 @@ fn when_is_test() {
 }
 
 #[test]
-fn when_isnt_test() {
+fn when_is_not_test() {
     let root_dir = env::current_dir().unwrap();
     let local_dir = format!(
         "{}{}",
@@ -121,10 +151,10 @@ fn when_isnt_test() {
 
     let result = store
         .collection("demo")
-        .when_isnt("date", "2022-01-01")
-        .when_isnt("date", "1992-09-17")
-        .when_isnt("date", "2022-09-09")
-        .when_isnt("date", "2022-09-10")
+        .when_is_not("date", "2022-01-01")
+        .when_is_not("date", "1992-09-17")
+        .when_is_not("date", "2022-09-09")
+        .when_is_not("date", "2022-09-10")
         .sort("date", RecordSortOrder::Desc)
         .get_first()
         .unwrap();
@@ -151,7 +181,7 @@ fn when_has_test() {
 }
 
 #[test]
-fn when_hasnt_test() {
+fn when_has_not_test() {
     let root_dir = env::current_dir().unwrap();
     let local_dir = format!(
         "{}{}",
@@ -167,7 +197,7 @@ fn when_hasnt_test() {
 
     let result = store
         .collection("demo")
-        .when_hasnt("special-item")
+        .when_has_not("special-item")
         .sort("date", RecordSortOrder::Desc)
         .get_all();
 
@@ -277,7 +307,10 @@ fn update_test() {
     siena(provider.clone())
         .collection("demo")
         .when_is("date", "1992-09-17")
-        .set(Vec::from([("special-item", "false")]));
+        .set(Vec::from([(
+            "special-item",
+            &RecordData::Str("false".to_string()),
+        )]));
 
     let result = siena(provider.clone())
         .collection("demo")
@@ -290,8 +323,14 @@ fn update_test() {
         collection: String::from("demo"),
         file_name: String::from("3.yml"),
         data: HashMap::from([
-            (String::from("special-item"), String::from("false")),
-            (String::from("date"), String::from("1992-09-17")),
+            (
+                String::from("special-item"),
+                RecordData::Str(String::from("false")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("1992-09-17")),
+            ),
         ]),
     };
 
@@ -300,7 +339,10 @@ fn update_test() {
     siena(provider.clone())
         .collection("demo")
         .when_is("date", "1992-09-17")
-        .set(Vec::from([("special-item", "true")]));
+        .set(Vec::from([(
+            "special-item",
+            &RecordData::Str("true".to_string()),
+        )]));
 
     let result_again = siena(provider.clone())
         .collection("demo")
@@ -313,8 +355,14 @@ fn update_test() {
         collection: String::from("demo"),
         file_name: String::from("3.yml"),
         data: HashMap::from([
-            (String::from("special-item"), String::from("true")),
-            (String::from("date"), String::from("1992-09-17")),
+            (
+                String::from("special-item"),
+                RecordData::Str(String::from("true")),
+            ),
+            (
+                String::from("date"),
+                RecordData::Str(String::from("1992-09-17")),
+            ),
         ]),
     };
 
@@ -335,7 +383,10 @@ fn create_test() {
 
     siena(provider.clone())
         .create("demo2", "test3")
-        .set(Vec::from([("title", "Title goes here")]));
+        .set(Vec::from([(
+            "title",
+            &RecordData::Str("Title goes here".to_string()),
+        )]));
 
     let result = siena(provider.clone())
         .collection("demo2")
@@ -346,7 +397,10 @@ fn create_test() {
         id: String::from("test3"),
         collection: String::from("demo2"),
         file_name: String::from("test3.yml"),
-        data: HashMap::from([(String::from("title"), String::from("Title goes here"))]),
+        data: HashMap::from([(
+            String::from("title"),
+            RecordData::Str(String::from("Title goes here")),
+        )]),
     };
 
     assert_eq!(result, expected);

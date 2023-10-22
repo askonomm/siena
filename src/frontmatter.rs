@@ -1,46 +1,66 @@
+use crate::siena::RecordData;
 use comrak::ComrakOptions;
 use regex::Regex;
 use std::collections::HashMap;
+use thiserror::Error;
 
-fn parse_yaml(contents: &str) -> HashMap<String, String> {
-    let parts = contents.split("\n");
-    let mut data = HashMap::new();
-
-    for part in parts {
-        if part.contains(":") {
-            let bits: Vec<&str> = part.split(":").collect();
-            let key = bits.first().unwrap().trim();
-            let value = bits.last().unwrap().trim();
-
-            data.insert(key.to_string(), value.to_string());
-        }
-    }
-
-    return data;
+#[derive(Error, Debug)]
+pub enum FrontMatterError {
+    #[error("Regex error: {0}")]
+    RegexError(#[from] regex::Error),
+    #[error("YAML error: {0}")]
+    YamlError(#[from] serde_yaml::Error),
 }
 
-fn parse_markdown(contents: &str) -> String {
-    return comrak::markdown_to_html(contents, &ComrakOptions::default());
-}
+pub fn parse(contents: &str) -> Result<HashMap<String, RecordData>, FrontMatterError> {
+    let re = Regex::new(r"(?i)(?:---)\n(.*)\n(?:---)")?;
+    let yaml_captures = re.captures(contents);
 
-pub fn parse(contents: &str) -> HashMap<String, String> {
-    let re = Regex::new(r"(?is)---(.*?)---").unwrap();
-    let yaml_match = re.find(contents);
-
-    if yaml_match.is_none() {
-        return HashMap::new();
+    // Captures not found, return empty HashMap
+    if yaml_captures.is_none() {
+        return Ok(HashMap::new());
     }
 
-    let yaml_bit = &contents[yaml_match.unwrap().start()..yaml_match.unwrap().end()];
-    let mut data = parse_yaml(yaml_bit);
+    let yaml_matches = yaml_captures.unwrap();
 
-    let md = parse_markdown(re.replace(contents, "").as_ref().trim());
+    // Captures found, but no YAML, return empty HashMap
+    if yaml_matches.len() < 2 {
+        return Ok(HashMap::new());
+    }
 
-    data.insert("content".to_string(), md);
-    data.insert(
-        "content_raw".to_string(),
-        re.replace(contents, "").as_ref().trim().to_string(),
-    );
+    let yaml_match = yaml_matches.get(1).unwrap();
+    let yaml_bit = &contents[yaml_match.start()..yaml_match.end()];
+    let mut data: HashMap<String, RecordData> = serde_yaml::from_str(yaml_bit)?;
 
-    return data;
+    // Insert Markdown
+    let doc = re.replace(contents, "").into_owned().trim().to_owned();
+    let md = comrak::markdown_to_html(&doc, &ComrakOptions::default());
+
+    data.insert("content".to_string(), RecordData::Str(md));
+    data.insert("content_raw".to_string(), RecordData::Str(doc.to_string()));
+
+    Ok(data)
+}
+
+#[test]
+fn parse_test() -> Result<(), FrontMatterError> {
+    let seed = "---\ntitle: !Str Hello, World\n---\n\nHi there.";
+    let expected: HashMap<String, RecordData> = HashMap::from([
+        (
+            String::from("title"),
+            RecordData::Str(String::from("Hello, World")),
+        ),
+        (
+            String::from("content"),
+            RecordData::Str(String::from("<p>Hi there.</p>\n")),
+        ),
+        (
+            String::from("content_raw"),
+            RecordData::Str(String::from("Hi there.")),
+        ),
+    ]);
+
+    assert_eq!(parse(seed)?, expected);
+
+    Ok(())
 }

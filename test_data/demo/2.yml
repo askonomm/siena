@@ -1,2 +1,2 @@
-title: Bye, World
-date: 2022-01-01
+title: !Str Bye, World
+date: !Str 2022-01-01

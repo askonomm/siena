@@ -3,12 +3,21 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::{cmp::Ordering, collections::HashMap};
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum RecordData {
+    Str(String),
+    Num(usize),
+    Bool(bool),
+    Map(HashMap<String, RecordData>),
+    Vec(Vec<RecordData>),
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Record {
     pub id: String,
     pub collection: String,
     pub file_name: String,
-    pub data: HashMap<String, String>,
+    pub data: HashMap<String, RecordData>,
 }
 
 #[derive(Debug)]
@@ -20,7 +29,7 @@ pub enum RecordSortOrder {
 
 pub trait StoreProvider {
     fn retrieve(&self, name: &str) -> Vec<Record>;
-    fn set(&self, records: Vec<Record>, data: Vec<(&str, &str)>) -> Vec<Record>;
+    fn set(&self, records: Vec<Record>, data: Vec<(&str, &RecordData)>) -> Vec<Record>;
     fn delete(&self, records: Vec<Record>);
 }
 
@@ -37,14 +46,6 @@ pub struct Siena {
 }
 
 impl Siena {
-    // Sets the type of store being used which will change the provider
-    // being used to fetch, create and manipulate records.
-    pub fn set_provider(mut self, provider: impl StoreProvider + 'static) -> Self {
-        self.provider = Box::new(provider);
-
-        self
-    }
-
     // Fetch records from a collection with a given `name`. A collection
     // is a directory in your Store, and a record is a YAML file in that
     // directory.
@@ -64,11 +65,14 @@ impl Siena {
                     return true;
                 }
 
-                if r.data.contains_key(key) && r.data[key] == equals_value {
-                    return true;
+                if !r.data.contains_key(key) {
+                    return false;
                 }
 
-                return false;
+                return match r.data.get(key).unwrap() {
+                    RecordData::Str(val) => val == equals_value,
+                    _ => false,
+                };
             })
             .collect();
 
@@ -76,7 +80,7 @@ impl Siena {
     }
 
     // Filter records based on value inequality for a key.
-    pub fn when_isnt(mut self, key: &str, equals_value: &str) -> Siena {
+    pub fn when_is_not(mut self, key: &str, equals_value: &str) -> Siena {
         self.records = self
             .records
             .into_iter()
@@ -85,13 +89,14 @@ impl Siena {
                     return true;
                 }
 
-                let contains_k = r.data.contains_key(key);
-
-                if (contains_k && r.data[key] != equals_value) || !contains_k {
-                    return true;
+                if !r.data.contains_key(key) {
+                    return false;
                 }
 
-                return false;
+                return match r.data.get(key).unwrap() {
+                    RecordData::Str(val) => val != equals_value,
+                    _ => false,
+                };
             })
             .collect();
 
@@ -110,7 +115,7 @@ impl Siena {
     }
 
     // Filter records based on key lack of presence.
-    pub fn when_hasnt(mut self, key: &str) -> Siena {
+    pub fn when_has_not(mut self, key: &str) -> Siena {
         self.records = self
             .records
             .into_iter()
@@ -132,11 +137,14 @@ impl Siena {
                     return true;
                 }
 
-                if r.data.contains_key(key) && re.is_match(r.data[key].as_str()) {
-                    return true;
+                if !r.data.contains_key(key) {
+                    return false;
                 }
 
-                return false;
+                return match r.data.get(key).unwrap() {
+                    RecordData::Str(val) => re.is_match(val.as_str()),
+                    _ => false,
+                };
             })
             .collect();
 
@@ -154,22 +162,23 @@ impl Siena {
                 };
             }
 
-            if a.data.get(key).is_some() && b.data.get(key).is_some() {
-                let a_key = a.data.get(key).unwrap();
-                let b_key = b.data.get(key).unwrap();
-
+            if a.data.get(key).is_none() || b.data.get(key).is_none() {
                 return match order {
-                    RecordSortOrder::Asc => a_key.cmp(b_key),
-                    RecordSortOrder::Desc => b_key.cmp(a_key),
-                    RecordSortOrder::Custom(f) => f(a_key.clone(), b_key.clone()),
+                    RecordSortOrder::Asc => Ordering::Greater,
+                    RecordSortOrder::Desc => Ordering::Less,
+                    _ => Ordering::Less,
                 };
             }
-
-            match order {
-                RecordSortOrder::Asc => Ordering::Greater,
-                RecordSortOrder::Desc => Ordering::Less,
+            return match (a.data.get(key).unwrap(), b.data.get(key).unwrap()) {
+                (RecordData::Str(a), RecordData::Str(b)) => {
+                    return match order {
+                        RecordSortOrder::Asc => a.cmp(b),
+                        RecordSortOrder::Desc => b.cmp(a),
+                        RecordSortOrder::Custom(f) => f(a.clone(), b.clone()),
+                    };
+                }
                 _ => Ordering::Less,
-            }
+            };
         });
 
         self
@@ -223,7 +232,7 @@ impl Siena {
 
     // Set a Vector of tuples (key, value) in all records queried,
     // and persist them on file.
-    pub fn set(self, data: Vec<(&str, &str)>) {
+    pub fn set(self, data: Vec<(&str, &RecordData)>) {
         self.provider.set(self.records.clone(), data);
     }
 

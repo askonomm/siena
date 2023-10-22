@@ -1,5 +1,20 @@
 # Changelog
 
+### 3.0
+
+_2023_10_21_
+
+**Method name changes**
+
+The following methods have been renamed:
+
+- `when_isnt` is now `when_is_not`
+- `when_hasnt` is now `when_has_not`
+
+**YAML and FrontMatter data improvements**
+
+YAML parsing has much improved. When previously YAML parsing only supported `HashMap<String, String>`, as in key: value, and nothing else, then now the YAML parser supports a variety of new data structures such as `usize`, `bool`, `Vec` and `HashMap`. 
+
 ### 2.0
 
 _2023-10-15_
