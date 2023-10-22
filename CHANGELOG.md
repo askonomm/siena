@@ -1,5 +1,11 @@
 # Changelog
 
+### 3.1.0
+
+_2023_10_22_
+
+Fixed an issue with multi-item YAML parsing from FrontMatter files that resulted in no data being returned.
+
 ### 3.0.1
 
 _2023_10_22_

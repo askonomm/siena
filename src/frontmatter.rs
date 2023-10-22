@@ -13,7 +13,7 @@ pub enum FrontMatterError {
 }
 
 pub fn parse(contents: &str) -> Result<HashMap<String, RecordData>, FrontMatterError> {
-    let re = Regex::new(r"(?i)(?:---)\n(.*)\n(?:---)")?;
+    let re = Regex::new(r"(?is)(?:---)\n(.*)\n(?:---)")?;
     let yaml_captures = re.captures(contents);
 
     // Captures not found, return empty HashMap

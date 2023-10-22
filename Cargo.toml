@@ -2,7 +2,7 @@
 name = "siena"
 description = "Siena is data provider agnostic ORM."
 repository = "https://github.com/askonomm/siena"
-version = "3.0.1"
+version = "3.1.0"
 edition = "2021"
 authors = ["Asko Nõmm <asko@asko.dev>"]
 license = "MIT"
