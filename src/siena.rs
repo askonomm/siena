@@ -25,7 +25,8 @@ pub struct Record {
 pub enum RecordSortOrder {
     Asc,
     Desc,
-    Custom(fn(String, String) -> Ordering),
+    CustomStr(fn(String, String) -> Ordering),
+    CustomNum(fn(usize, usize) -> Ordering),
 }
 
 pub trait StoreProvider {
@@ -159,7 +160,8 @@ impl Siena {
                 return match order {
                     RecordSortOrder::Asc => a.id.cmp(&b.id),
                     RecordSortOrder::Desc => b.id.cmp(&a.id),
-                    RecordSortOrder::Custom(f) => f(a.clone().id, b.clone().id),
+                    RecordSortOrder::CustomStr(f) => f(a.clone().id, b.clone().id),
+                    _ => Ordering::Equal,
                 };
             }
 
@@ -167,7 +169,7 @@ impl Siena {
                 return match order {
                     RecordSortOrder::Asc => Ordering::Greater,
                     RecordSortOrder::Desc => Ordering::Less,
-                    _ => Ordering::Less,
+                    _ => Ordering::Equal,
                 };
             }
             return match (a.data.get(key).unwrap(), b.data.get(key).unwrap()) {
@@ -175,10 +177,19 @@ impl Siena {
                     return match order {
                         RecordSortOrder::Asc => a.cmp(b),
                         RecordSortOrder::Desc => b.cmp(a),
-                        RecordSortOrder::Custom(f) => f(a.clone(), b.clone()),
+                        RecordSortOrder::CustomStr(f) => f(a.clone(), b.clone()),
+                        _ => Ordering::Equal,
                     };
                 }
-                _ => Ordering::Less,
+                (RecordData::Num(a), RecordData::Num(b)) => {
+                    return match order {
+                        RecordSortOrder::Asc => a.cmp(b),
+                        RecordSortOrder::Desc => b.cmp(a),
+                        RecordSortOrder::CustomNum(f) => f(a.clone(), b.clone()),
+                        _ => Ordering::Equal,
+                    };
+                }
+                _ => Ordering::Equal,
             };
         });
 

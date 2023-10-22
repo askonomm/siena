@@ -1,5 +1,13 @@
 # Changelog
 
+### 3.2.0
+
+_2023_10_22_
+
+- Fixed an issue where sorting did not work when the data type was `usize`
+- Renamed `RecordSortOrder::Custom` to `RecordSortOrder::CustomStr` for `String` types
+- Added `RecordSortOrder::CustomNum` for `usize` types
+
 ### 3.1.0
 
 _2023_10_22_
