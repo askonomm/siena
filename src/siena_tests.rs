@@ -116,11 +116,11 @@ fn record_6() -> Record {
             ),
             (
                 String::from("content"),
-                RecordData::Str(String::from("<p>:)</p>\n")),
+                RecordData::Str(String::from("<p>:)</p>\n<hr />\n<p>:)</p>\n")),
             ),
             (
                 String::from("content_raw"),
-                RecordData::Str(String::from(":)")),
+                RecordData::Str(String::from(":)\n\n---\n\n:)")),
             ),
         ]),
     }

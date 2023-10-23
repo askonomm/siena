@@ -1,5 +1,11 @@
 # Changelog
 
+### 3.2.1
+
+_2023_10_23_
+
+- Fixed an issue where FrontMatter file YAML parsing was too eager in `LocalProvider`
+
 ### 3.2.0
 
 _2023_10_22_
