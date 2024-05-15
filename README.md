@@ -8,7 +8,7 @@ Siena comes built-in with a flat-file data provider, `LocalProvider`, supporting
 
 Add the following to your Cargo.toml file:
 ```TOML
-siena = "3.0.0"
+siena = "3.2.1"
 ```
 
 ## Changelog
